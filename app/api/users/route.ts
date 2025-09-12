@@ -1,1 +1,21 @@
-{"code":"rate-limited","message":"You have hit the rate limit. Please upgrade to keep chatting.","providerLimitHit":false,"isRetryable":true}
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+
+export async function GET() {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        assignedProvince: true,
+        assignedDistrict: true,
+      },
+    });
+
+    return NextResponse.json({ users });
+  } catch (error: any) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}

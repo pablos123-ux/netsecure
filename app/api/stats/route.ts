@@ -1,61 +1,61 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { formatBytes } from '@/lib/utils/bandwidth';
 
 export async function GET() {
   try {
-    // Get user statistics
-    const [totalUsers, activeUsers, blockedUsers] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { isOnline: true } }),
-      prisma.user.count({ where: { isBlocked: true } })
+    const [
+      totalRouters,
+      onlineRouters,
+      offlineRouters,
+      totalStaff,
+      activeAlerts,
+      totalProvinces,
+      totalDistricts,
+      totalTowns
+    ] = await Promise.all([
+      prisma.router.count(),
+      prisma.router.count({ where: { status: 'ONLINE' } }),
+      prisma.router.count({ where: { status: 'OFFLINE' } }),
+      prisma.user.count({ where: { role: 'STAFF' } }),
+      prisma.alert.count({ where: { status: 'ACTIVE' } }),
+      prisma.province.count(),
+      prisma.district.count(),
+      prisma.town.count()
     ]);
 
-    // Get total bandwidth usage (last 24 hours)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const bandwidthLogs = await prisma.bandwidthLog.findMany({
-      where: {
-        timestamp: {
-          gte: yesterday
-        }
-      },
-      select: {
-        totalBytes: true
-      }
+    const routers = await prisma.router.findMany({
+      select: { uptime: true }
     });
 
-    const totalBandwidth = bandwidthLogs.reduce(
-      (sum, log) => sum + log.totalBytes, 
-      0
-    );
+    const averageUptime =
+      routers.length > 0
+        ? Math.round(routers.reduce((sum, r) => sum + r.uptime, 0) / routers.length)
+        : 0;
 
-    // Get recent activity count
-    const recentActivity = await prisma.activityLog.count({
-      where: {
-        timestamp: {
-          gte: yesterday
-        }
-      }
+    const bandwidthAgg = await prisma.router.aggregate({
+      _sum: { bandwidth: true }
     });
+
+    const totalBandwidth = bandwidthAgg._sum.bandwidth || 0;
 
     const stats = {
-      totalUsers,
-      activeUsers,
-      blockedUsers,
-      totalBandwidth,
-      totalBandwidthFormatted: formatBytes(totalBandwidth),
-      recentActivity,
-      uptime: process.uptime(),
-      lastUpdated: new Date().toISOString()
+      totalRouters,
+      onlineRouters,
+      offlineRouters,
+      totalStaff,
+      activeAlerts,
+      totalProvinces,
+      totalDistricts,
+      totalTowns,
+      averageUptime,
+      totalBandwidth
     };
 
     return NextResponse.json(stats);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching stats:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch statistics', details: error.message },
+      { error: 'Failed to fetch statistics' },
       { status: 500 }
     );
   }
