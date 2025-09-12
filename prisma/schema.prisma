@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  name               String
+  email              String    @unique
+  password           String
+  role               Role      @default(STAFF)
+  assignedProvinceId String?
+  assignedDistrictId String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  // Relations
+  assignedProvince   Province? @relation(fields: [assignedProvinceId], references: [id])
+  assignedDistrict   District? @relation(fields: [assignedDistrictId], references: [id])
+  logs               Log[]
+  alerts             Alert[]
+  
+  @@map("users")
+}
+
+model Province {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  // Relations
+  districts District[]
+  users     User[]
+  
+  @@map("provinces")
+}
+
+model District {
+  id         String   @id @default(cuid())
+  name       String
+  provinceId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Relations
+  province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  towns      Town[]
+  users      User[]
+  
+  @@unique([name, provinceId])
+  @@map("districts")
+}
+
+model Town {
+  id         String   @id @default(cuid())
+  name       String
+  districtId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Relations
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  routers    Router[]
+  
+  @@unique([name, districtId])
+  @@map("towns")
+}
+
+model Router {
+  id          String       @id @default(cuid())
+  name        String
+  model       String
+  ipAddress   String       @unique
+  status      RouterStatus @default(OFFLINE)
+  uptime      Int          @default(0) // in seconds
+  bandwidth   Float        @default(0) // in Mbps
+  capacity    Float        @default(100) // max capacity in Mbps
+  townId      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  lastSeen    DateTime?
+  
+  // Relations
+  town        Town         @relation(fields: [townId], references: [id], onDelete: Cascade)
+  alerts      Alert[]
+  
+  @@map("routers")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("logs")
+}
+
+model Alert {
+  id        String      @id @default(cuid())
+  routerId  String
+  message   String
+  status    AlertStatus @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  userId    String?
+  
+  // Relations
+  router    Router      @relation(fields: [routerId], references: [id], onDelete: Cascade)
+  user      User?       @relation(fields: [userId], references: [id])
+  
+  @@map("alerts")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum RouterStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+}
+
+enum AlertStatus {
+  ACTIVE
+  RESOLVED
+  DISMISSED
+}
