@@ -1,23 +1,28 @@
 import prisma from './prisma';
 import { hashPassword } from './auth';
 
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
 export async function seedDatabase() {
   try {
     // Create admin user
-    const adminExists = await prisma.user.findUnique({
-      where: { email: 'admin@rwanda.gov.rw' }
+    // Always try to create or upsert the admin user
+    const hashed = await hashPassword('admin123');
+    await prisma.user.upsert({
+      where: { email: 'admin@rwanda.gov.rw' },
+      update: {
+        name: 'System Administrator',
+        password: hashed,
+        role: 'ADMIN',
+      },
+      create: {
+        name: 'System Administrator',
+        email: 'admin@rwanda.gov.rw',
+        password: hashed,
+        role: 'ADMIN',
+      },
     });
-
-    if (!adminExists) {
-      await prisma.user.create({
-        data: {
-          name: 'System Administrator',
-          email: 'admin@rwanda.gov.rw',
-          password: await hashPassword('admin123'),
-          role: 'ADMIN',
-        },
-      });
-    }
+    console.log('Admin user ensured:', 'admin@rwanda.gov.rw / admin123');
 
     // Create provinces
     const provinces = [
@@ -117,3 +122,8 @@ export async function seedDatabase() {
     console.error('Error seeding database:', error);
   }
 }
+
+seedDatabase().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
