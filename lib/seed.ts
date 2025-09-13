@@ -6,7 +6,6 @@ console.log('DATABASE_URL:', process.env.DATABASE_URL);
 export async function seedDatabase() {
   try {
     // Create admin user
-    // Always try to create or upsert the admin user
     const hashed = await hashPassword('admin123');
     await prisma.user.upsert({
       where: { email: 'admin@rwanda.gov.rw' },
@@ -24,25 +23,21 @@ export async function seedDatabase() {
     });
     console.log('Admin user ensured:', 'admin@rwanda.gov.rw / admin123');
 
-    // Create provinces
+    // Create provinces with codes
     const provinces = [
-      'Kigali City',
-      'Northern Province',
-      'Southern Province',
-      'Eastern Province',
-      'Western Province'
+      { name: 'Kigali City', code: 'KGL' },
+      { name: 'Northern Province', code: 'NTH' },
+      { name: 'Southern Province', code: 'STH' },
+      { name: 'Eastern Province', code: 'EST' },
+      { name: 'Western Province', code: 'WST' }
     ];
 
-    for (const provinceName of provinces) {
-      const existingProvince = await prisma.province.findUnique({
-        where: { name: provinceName }
+    for (const province of provinces) {
+      await prisma.province.upsert({
+        where: { name: province.name },
+        update: province,
+        create: province,
       });
-
-      if (!existingProvince) {
-        await prisma.province.create({
-          data: { name: provinceName }
-        });
-      }
     }
 
     // Create sample districts for Kigali
@@ -51,24 +46,26 @@ export async function seedDatabase() {
     });
 
     if (kigaliProvince) {
-      const districts = ['Gasabo', 'Kicukiro', 'Nyarugenge'];
+      const districts = [
+        { name: 'Gasabo', code: 'GSB' },
+        { name: 'Kicukiro', code: 'KCK' },
+        { name: 'Nyarugenge', code: 'NYR' }
+      ];
       
-      for (const districtName of districts) {
-        const existingDistrict = await prisma.district.findFirst({
+      for (const district of districts) {
+        await prisma.district.upsert({
           where: { 
-            name: districtName,
-            provinceId: kigaliProvince.id 
+            name_provinceId: {
+              name: district.name,
+              provinceId: kigaliProvince.id 
+            }
+          },
+          update: district,
+          create: {
+            ...district,
+            provinceId: kigaliProvince.id
           }
         });
-
-        if (!existingDistrict) {
-          await prisma.district.create({
-            data: {
-              name: districtName,
-              provinceId: kigaliProvince.id
-            }
-          });
-        }
       }
     }
 
@@ -78,24 +75,27 @@ export async function seedDatabase() {
     });
 
     if (gasaboDistrict) {
-      const towns = ['Kimironko', 'Remera', 'Kacyiru', 'Kimisagara'];
+      const towns = [
+        { name: 'Kimironko', code: 'KMR' },
+        { name: 'Remera', code: 'RMR' },
+        { name: 'Kacyiru', code: 'KCY' },
+        { name: 'Kimisagara', code: 'KMS' }
+      ];
       
-      for (const townName of towns) {
-        const existingTown = await prisma.town.findFirst({
-          where: { 
-            name: townName,
-            districtId: gasaboDistrict.id 
-          }
-        });
-
-        if (!existingTown) {
-          await prisma.town.create({
-            data: {
-              name: townName,
+      for (const town of towns) {
+        await prisma.town.upsert({
+          where: {
+            name_districtId: {
+              name: town.name,
               districtId: gasaboDistrict.id
             }
-          });
-        }
+          },
+          update: town,
+          create: {
+            ...town,
+            districtId: gasaboDistrict.id
+          }
+        });
       }
     }
 
@@ -114,6 +114,90 @@ export async function seedDatabase() {
           assignedProvinceId: kigaliProvince.id,
           assignedDistrictId: gasaboDistrict.id,
         },
+      });
+    }
+
+    // Create sample routers
+    const kimironkoTown = await prisma.town.findFirst({
+      where: { name: 'Kimironko' }
+    });
+
+    const adminUser = await prisma.user.findUnique({
+      where: { email: 'admin@rwanda.gov.rw' }
+    });
+
+    if (kimironkoTown && adminUser) {
+      const sampleRouters = [
+        {
+          name: 'Kimironko-AP-01',
+          model: 'TP-Link AC1750',
+          ipAddress: '192.168.1.10',
+          macAddress: '00:14:22:01:23:45',
+          status: 'ONLINE' as const,
+          uptime: 86400,
+          bandwidth: 45.5,
+          capacity: 100,
+          location: 'Kimironko Market Area',
+          townId: kimironkoTown.id,
+          createdById: adminUser.id,
+        },
+        {
+          name: 'Kimironko-AP-02',
+          model: 'Ubiquiti UniFi AC Pro',
+          ipAddress: '192.168.1.11',
+          macAddress: '00:14:22:01:23:46',
+          status: 'OFFLINE' as const,
+          uptime: 0,
+          bandwidth: 0,
+          capacity: 150,
+          location: 'Kimironko Bus Station',
+          townId: kimironkoTown.id,
+          createdById: adminUser.id,
+        }
+      ];
+
+      for (const router of sampleRouters) {
+        await prisma.router.upsert({
+          where: { ipAddress: router.ipAddress },
+          update: router,
+          create: router,
+        });
+      }
+    }
+
+    // Create default settings
+    const defaultSettings = [
+      {
+        key: 'system_name',
+        value: 'Rwanda Network Management System',
+        description: 'System display name',
+        category: 'general'
+      },
+      {
+        key: 'max_bandwidth_threshold',
+        value: '80',
+        description: 'Maximum bandwidth usage threshold (%)',
+        category: 'monitoring'
+      },
+      {
+        key: 'alert_email_enabled',
+        value: 'true',
+        description: 'Enable email alerts',
+        category: 'notifications'
+      },
+      {
+        key: 'session_timeout',
+        value: '3600',
+        description: 'User session timeout in seconds',
+        category: 'security'
+      }
+    ];
+
+    for (const setting of defaultSettings) {
+      await prisma.settings.upsert({
+        where: { key: setting.key },
+        update: setting,
+        create: setting,
       });
     }
 

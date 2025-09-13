@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { AdminStatsChart } from '@/components/admin/admin-stats-chart';
 import { RecentActivity } from '@/components/admin/recent-activity';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -157,7 +158,98 @@ export default function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Link href="/admin/staff">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-blue-600" />
+                  Staff Management
+                </CardTitle>
+                <CardDescription>
+                  Add, edit, and manage staff members and their assignments
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">Manage Staff</Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/locations">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="w-5 h-5 mr-2 text-green-600" />
+                  Location Management
+                </CardTitle>
+                <CardDescription>
+                  Manage provinces, districts, and towns hierarchy
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">Manage Locations</Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/routers">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Router className="w-5 h-5 mr-2 text-purple-600" />
+                  Router Management
+                </CardTitle>
+                <CardDescription>
+                  Monitor and manage all network routers and access points
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">Manage Routers</Button>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Additional Management Options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <Link href="/admin/users">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-indigo-600" />
+                  User Access Control
+                </CardTitle>
+                <CardDescription>
+                  Monitor connected users and control internet access
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">Manage User Access</Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/settings">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Settings className="w-5 h-5 mr-2 text-gray-600" />
+                  System Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure system preferences and monitoring parameters
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">System Settings</Button>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="w-5 h-5 mr-2 text-blue-600" />

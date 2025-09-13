@@ -18,6 +18,8 @@ model User {
   role               Role      @default(STAFF)
   assignedProvinceId String?
   assignedDistrictId String?
+  isActive           Boolean   @default(true)
+  lastLogin          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   
@@ -26,6 +28,7 @@ model User {
   assignedDistrict   District? @relation(fields: [assignedDistrictId], references: [id])
   logs               Log[]
   alerts             Alert[]
+  createdRouters     Router[]  @relation("RouterCreatedBy")
   
   @@map("users")
 }
@@ -33,6 +36,8 @@ model User {
 model Province {
   id        String     @id @default(cuid())
   name      String     @unique
+  code      String     @unique
+  isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   
@@ -46,7 +51,9 @@ model Province {
 model District {
   id         String   @id @default(cuid())
   name       String
+  code       String
   provinceId String
+  isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
@@ -56,13 +63,16 @@ model District {
   users      User[]
   
   @@unique([name, provinceId])
+  @@unique([code, provinceId])
   @@map("districts")
 }
 
 model Town {
   id         String   @id @default(cuid())
   name       String
+  code       String
   districtId String
+  isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
@@ -71,6 +81,7 @@ model Town {
   routers    Router[]
   
   @@unique([name, districtId])
+  @@unique([code, districtId])
   @@map("towns")
 }
 
@@ -79,20 +90,49 @@ model Router {
   name        String
   model       String
   ipAddress   String       @unique
+  macAddress  String?
   status      RouterStatus @default(OFFLINE)
   uptime      Int          @default(0) // in seconds
-  bandwidth   Float        @default(0) // in Mbps
+  bandwidth   Float        @default(0) // current usage in Mbps
   capacity    Float        @default(100) // max capacity in Mbps
+  location    String?      // physical location description
   townId      String
+  createdById String
+  isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   lastSeen    DateTime?
   
   // Relations
   town        Town         @relation(fields: [townId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("RouterCreatedBy", fields: [createdById], references: [id])
   alerts      Alert[]
+  connectedUsers ConnectedUser[]
   
   @@map("routers")
+}
+
+model ConnectedUser {
+  id          String            @id @default(cuid())
+  deviceName  String?
+  ipAddress   String
+  macAddress  String
+  status      ConnectedUserStatus @default(ACTIVE)
+  bandwidth   Float             @default(0) // current usage in Mbps
+  totalUsage  Float             @default(0) // total usage in MB
+  routerId    String
+  isBlocked   Boolean           @default(false)
+  blockedAt   DateTime?
+  blockedBy   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  lastSeen    DateTime          @default(now())
+  
+  // Relations
+  router      Router            @relation(fields: [routerId], references: [id], onDelete: Cascade)
+  
+  @@unique([macAddress, routerId])
+  @@map("connected_users")
 }
 
 model Log {
@@ -100,6 +140,8 @@ model Log {
   userId    String
   action    String
   details   String?
+  ipAddress String?
+  userAgent String?
   timestamp DateTime @default(now())
   
   // Relations
@@ -111,17 +153,33 @@ model Log {
 model Alert {
   id        String      @id @default(cuid())
   routerId  String
+  type      AlertType   @default(OFFLINE)
   message   String
+  severity  AlertSeverity @default(MEDIUM)
   status    AlertStatus @default(ACTIVE)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  userId    String?
+  resolvedAt DateTime?
+  resolvedBy String?
   
   // Relations
   router    Router      @relation(fields: [routerId], references: [id], onDelete: Cascade)
-  user      User?       @relation(fields: [userId], references: [id])
+  resolver  User?       @relation(fields: [resolvedBy], references: [id])
   
   @@map("alerts")
+}
+
+model Settings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  category    String   @default("general")
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("settings")
 }
 
 enum Role {
@@ -133,10 +191,33 @@ enum RouterStatus {
   ONLINE
   OFFLINE
   MAINTENANCE
+  ERROR
+}
+
+enum ConnectedUserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
 }
 
 enum AlertStatus {
   ACTIVE
   RESOLVED
   DISMISSED
+}
+
+enum AlertType {
+  OFFLINE
+  HIGH_BANDWIDTH
+  LOW_BANDWIDTH
+  CONNECTION_ERROR
+  MAINTENANCE
+  SECURITY
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
