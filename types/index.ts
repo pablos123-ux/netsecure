@@ -14,6 +14,8 @@ export interface User {
 export interface Province {
   id: string;
   name: string;
+  code: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   districts?: District[];
@@ -26,7 +28,9 @@ export interface Province {
 export interface District {
   id: string;
   name: string;
+  code: string;
   provinceId: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   province?: Province;
@@ -40,7 +44,9 @@ export interface District {
 export interface Town {
   id: string;
   name: string;
+  code: string;
   districtId: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   district?: District;

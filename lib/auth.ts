@@ -1,16 +1,23 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
+import crypto from 'crypto';
 import prisma from './prisma';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const isProd = process.env.NODE_ENV === 'production';
+let SECRET_KEY = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+if (!SECRET_KEY && !isProd) {
+  SECRET_KEY = crypto.randomBytes(32).toString('hex');
+  console.warn('[auth] JWT_SECRET missing; generated ephemeral dev secret. Add JWT_SECRET to .env for stable sessions.');
 }
 
-// Type assertion since we've checked for existence above
-const SECRET_KEY = JWT_SECRET as string;
+if (!SECRET_KEY) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
+
+// Type assertion since we've guaranteed existence above
+const JWT_SECRET_KEY = SECRET_KEY as string;
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -23,14 +30,14 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export function generateToken(userId: string, role: string): string {
   return jwt.sign(
     { userId, role },
-    SECRET_KEY,
+    JWT_SECRET_KEY,
     { expiresIn: '24h' }
   );
 }
 
 export function verifyToken(token: string): { userId: string; role: string } | null {
   try {
-    return jwt.verify(token, SECRET_KEY) as { userId: string; role: string };
+    return jwt.verify(token, JWT_SECRET_KEY) as { userId: string; role: string };
   } catch {
     return null;
   }
