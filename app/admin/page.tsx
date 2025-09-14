@@ -19,7 +19,7 @@ export default function AdminPage() {
       color: "bg-blue-500"
     },
     {
-      title: "Location Management",
+      title: "Locations",
       description: "Manage provinces, districts, and towns",
       icon: MapPin,
       path: "/admin/locations",
