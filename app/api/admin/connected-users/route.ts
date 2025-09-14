@@ -6,23 +6,39 @@ export async function GET(request: NextRequest) {
   try {
     await requireAuth(request, 'ADMIN');
 
-    const users = await prisma.connectedUser.findMany({
-      include: {
-        router: {
-          include: {
-            town: {
-              include: {
-                district: {
-                  include: {
-                    province: true
-                  }
-                }
-              }
-            }
+    // Fetch all users with their assigned locations
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        assignedProvince: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        assignedDistrict: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        logs: {
+          take: 1,
+          orderBy: {
+            timestamp: 'desc'
+          },
+          select: {
+            action: true,
+            timestamp: true
           }
         }
       },
-      orderBy: { lastSeen: 'desc' }
+      orderBy: { 
+        name: 'asc' 
+      }
     });
 
     return NextResponse.json({ users });
