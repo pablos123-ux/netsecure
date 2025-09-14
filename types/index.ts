@@ -5,6 +5,8 @@ export interface User {
   role: 'ADMIN' | 'STAFF';
   assignedProvinceId?: string;
   assignedDistrictId?: string;
+  isActive: boolean;
+  lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
   assignedProvince?: Province;
@@ -61,11 +63,13 @@ export interface Router {
   name: string;
   model: string;
   ipAddress: string;
-  status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE';
+  macAddress?: string;
+  status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE' | 'ERROR';
   uptime: number;
   bandwidth: number;
   capacity: number;
   townId: string;
+  location?: string;
   createdAt: Date;
   updatedAt: Date;
   lastSeen?: Date;
@@ -134,4 +138,22 @@ export interface CreateRouterData {
   ipAddress: string;
   capacity: number;
   townId: string;
+}
+
+export interface ConnectedUser {
+  id: string;
+  deviceName?: string;
+  ipAddress: string;
+  macAddress: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+  bandwidth: number;
+  totalUsage: number;
+  routerId: string;
+  isBlocked: boolean;
+  blockedAt?: Date;
+  blockedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastSeen: Date;
+  router?: Router;
 }
