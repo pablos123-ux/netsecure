@@ -17,10 +17,10 @@ export function RecentActivity() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/admin/activity?limit=10');
+      const response = await fetch('/api/admin/activity?limit=20');
       if (response.ok) {
         const data = await response.json();
-        setActivities(data.activities);
+        setActivities(data.activities || []);
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
@@ -55,13 +55,13 @@ export function RecentActivity() {
             </div>
           ) : (
             <div className="space-y-4">
-              {activities.map((activity) => (
+              {Array.isArray(activities) && activities.map((activity) => (
                 <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
                       {getActionBadge(activity.action)}
                       <span className="text-sm font-medium text-gray-900">
-                        {activity.user?.name || 'System'}
+                        {activity.user?.name || 'Unknown User'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">{activity.action}</p>
@@ -70,7 +70,7 @@ export function RecentActivity() {
                     )}
                   </div>
                   <div className="text-xs text-gray-400">
-                    {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                    {activity.timestamp ? formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true }) : 'Unknown time'}
                   </div>
                 </div>
               ))}

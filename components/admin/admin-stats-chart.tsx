@@ -19,8 +19,8 @@ export function AdminStatsChart() {
       const response = await fetch('/api/admin/chart-data');
       if (response.ok) {
         const data = await response.json();
-        setChartData(data.provinceStats);
-        setPieData(data.statusDistribution);
+        setChartData(data.provinceStats || []);
+        setPieData(data.statusDistribution || []);
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
@@ -35,17 +35,26 @@ export function AdminStatsChart() {
       </CardHeader>
       <CardContent>
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="online" fill="#10B981" name="Online" />
-              <Bar dataKey="offline" fill="#EF4444" name="Offline" />
-              <Bar dataKey="maintenance" fill="#F59E0B" name="Maintenance" />
-            </BarChart>
-          </ResponsiveContainer>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="online" fill="#10B981" name="Online" />
+                <Bar dataKey="offline" fill="#EF4444" name="Offline" />
+                <Bar dataKey="maintenance" fill="#F59E0B" name="Maintenance" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Loading chart data...</p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
