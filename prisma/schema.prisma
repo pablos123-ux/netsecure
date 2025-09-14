@@ -36,7 +36,7 @@ model User {
 model Province {
   id        String     @id @default(cuid())
   name      String     @unique
-  code      String     @unique
+  code      String     @unique @default("")
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -51,7 +51,7 @@ model Province {
 model District {
   id         String   @id @default(cuid())
   name       String
-  code       String
+  code       String   @default("")
   provinceId String
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
@@ -70,7 +70,7 @@ model District {
 model Town {
   id         String   @id @default(cuid())
   name       String
-  code       String
+  code       String   @default("")
   districtId String
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())

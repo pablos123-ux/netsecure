@@ -10,7 +10,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const district = await prisma.district.update({
       where: { id },
-      data: { name, code, provinceId },
+      data: { 
+        name, 
+        code, 
+        provinceId 
+      },
       include: { province: true }
     });
 
