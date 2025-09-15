@@ -98,16 +98,42 @@ export interface Alert {
 }
 
 export interface DashboardStats {
+  // Router Stats
   totalRouters: number;
   onlineRouters: number;
   offlineRouters: number;
+  
+  // Staff Stats
   totalStaff: number;
-  activeAlerts: number;
+  activeStaff: number;
+  adminCount: number;
+  
+  // Location Stats
   totalProvinces: number;
   totalDistricts: number;
   totalTowns: number;
+  
+  // Network Stats
   averageUptime: number;
   totalBandwidth: number;
+  networkStatus: 'stable' | 'degraded' | 'outage' | 'maintenance';
+  
+  // User Stats
+  totalUsers: number;
+  activeUsers: number;
+  
+  // System Stats
+  activeAlerts: number;
+  activeSessions: number;
+  blockedIPs: number;
+  
+  // Recent Activity
+  recentAlerts?: Array<{
+    id: string;
+    message: string;
+    severity: 'low' | 'medium' | 'high';
+    timestamp: string;
+  }>;
 }
 
 export interface ChartDataPoint {

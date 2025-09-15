@@ -150,10 +150,6 @@ export default function StaffManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={() => router.push('/admin')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
                 <p className="text-gray-600">Manage system users and their assignments</p>
@@ -302,10 +298,7 @@ export default function StaffManagement() {
                       {member.lastLogin ? new Date(member.lastLogin).toLocaleDateString() : 'Never'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(member)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                      <div className="flex items-center space-x-4">
                         {member.role !== 'ADMIN' && (
                           <Button variant="outline" size="sm" onClick={() => handleDelete(member.id)}>
                             <Trash2 className="w-4 h-4" />

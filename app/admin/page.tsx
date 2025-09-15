@@ -53,15 +53,15 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 p-6 w-full">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Network Management System Overview</p>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Network Management System Overview</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Routers</CardTitle>
@@ -117,22 +117,26 @@ export default function AdminDashboard() {
         </div>
 
         {/* Charts and Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AdminStatsChart />
-          <RecentActivity />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2">
+            <AdminStatsChart />
+          </div>
+          <div className="xl:col-span-1">
+            <RecentActivity />
+          </div>
         </div>
 
         {/* Additional Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
                 Network Performance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Average Uptime</span>
                   <span className="text-sm font-medium">{stats?.averageUptime || 0}%</span>
@@ -145,15 +149,15 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
                 <Activity className="w-5 h-5 mr-2 text-blue-600" />
                 System Health
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Online Rate</span>
                   <span className="text-sm font-medium text-green-600">
@@ -168,15 +172,15 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
                 <Shield className="w-5 h-5 mr-2 text-purple-600" />
                 Security
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Active Sessions</span>
                   <span className="text-sm font-medium">0</span>
