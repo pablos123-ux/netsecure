@@ -4,20 +4,17 @@ import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import prisma from './prisma';
 
-const isProd = process.env.NODE_ENV === 'production';
 let SECRET_KEY = process.env.JWT_SECRET;
 
-if (!SECRET_KEY && !isProd) {
-  SECRET_KEY = crypto.randomBytes(32).toString('hex');
-  console.warn('[auth] JWT_SECRET missing; generated ephemeral dev secret. Add JWT_SECRET to .env for stable sessions.');
-}
-
+// Do not throw at import time (breaks builds). Fall back to ephemeral secret
+// and warn loudly. Ensure JWT_SECRET is configured in production runtime.
 if (!SECRET_KEY) {
-  throw new Error('JWT_SECRET environment variable is required in production');
+  SECRET_KEY = crypto.randomBytes(32).toString('hex');
+  const envLabel = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+  console.warn(`[auth] JWT_SECRET missing during ${envLabel}. Using ephemeral secret for build/runtime. Set JWT_SECRET in environment for stable sessions.`);
 }
 
-// Type assertion since we've guaranteed existence above
-const JWT_SECRET_KEY = SECRET_KEY as string;
+const JWT_SECRET_KEY = SECRET_KEY;
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);

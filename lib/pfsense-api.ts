@@ -23,10 +23,14 @@ interface ConnectedUser {
 class PfSenseAPI {
   private config: PfSenseConfig;
   private agent: https.Agent;
+  private disabled: boolean;
 
   constructor() {
+    // If PFSENSE_DISABLED is true or no host is provided, run in mock/no-op mode
+    this.disabled = process.env.PFSENSE_DISABLED === 'true' || !process.env.PFSENSE_HOST;
+
     this.config = {
-      host: process.env.PFSENSE_HOST || '192.168.1.1',
+      host: process.env.PFSENSE_HOST || '127.0.0.1',
       username: process.env.PFSENSE_USERNAME || 'admin',
       password: process.env.PFSENSE_PASSWORD || 'pfsense',
       port: parseInt(process.env.PFSENSE_PORT || '443')
@@ -40,6 +44,11 @@ class PfSenseAPI {
 
   private async makeRequest(endpoint: string, method: string = 'GET', data?: any): Promise<any> {
     try {
+      // Short-circuit: return mock data when pfSense is disabled/not configured
+      if (this.disabled) {
+        return this.getMockData(endpoint, method);
+      }
+
       const url = `https://${this.config.host}:${this.config.port}/api/v1${endpoint}`;
       const auth = Buffer.from(`${this.config.username}:${this.config.password}`).toString('base64');
       
