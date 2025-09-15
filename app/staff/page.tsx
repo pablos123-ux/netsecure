@@ -3,102 +3,64 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { StaffRouterTable } from '@/components/staff/staff-router-table';
+import { StaffAlerts } from '@/components/staff/staff-alerts';
 import { 
   Router, 
   AlertTriangle, 
+  MapPin,
   Activity,
-  LogOut,
-  Plus,
-  MapPin
+  Users,
+  Wifi
 } from 'lucide-react';
-import { DashboardStats, User } from '@/types';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { StaffRouterTable } from '@/components/staff/staff-router-table';
-import { StaffAlerts } from '@/components/staff/staff-alerts';
+import { DashboardStats } from '@/types';
 
 export default function StaffDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchStats = async () => {
     try {
-      const [statsResponse, userResponse] = await Promise.all([
-        fetch('/api/staff/stats'),
-        fetch('/api/auth/me')
-      ]);
-
-      if (!statsResponse.ok || !userResponse.ok) {
-        throw new Error('Failed to fetch dashboard data');
+      const response = await fetch('/api/staff/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
       }
-
-      const [statsData, userData] = await Promise.all([
-        statsResponse.json(),
-        userResponse.json()
-      ]);
-
-      setStats(statsData);
-      setUser(userData);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      toast.success('Logged out successfully');
-    } catch (error) {
-      toast.error('Logout failed');
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Staff Dashboard</h1>
-              <p className="text-gray-600">
-                Welcome, {user?.name} - {user?.assignedProvince?.name}
-                {user?.assignedDistrict && ` / ${user.assignedDistrict.name}`}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Staff Dashboard</h1>
+          <p className="text-gray-600">Manage routers in your assigned area</p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">My Routers</CardTitle>
@@ -145,23 +107,18 @@ export default function StaffDashboard() {
         </div>
 
         {/* Alerts Section */}
-        <div className="mb-8">
-          <StaffAlerts />
-        </div>
+        <StaffAlerts />
 
         {/* Router Management */}
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
+          <div>
             <h2 className="text-xl font-semibold text-gray-900">Router Management</h2>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Router
-            </Button>
+            <p className="text-gray-600">Manage routers in your assigned area</p>
           </div>
           
           <StaffRouterTable />
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

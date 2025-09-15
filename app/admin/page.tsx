@@ -1,123 +1,195 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AdminStatsChart } from "@/components/admin/admin-stats-chart";
-import { RecentActivity } from "@/components/admin/recent-activity";
-import { Settings, MapPin, Router, Users, UserCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { AdminStatsChart } from '@/components/admin/admin-stats-chart';
+import { RecentActivity } from '@/components/admin/recent-activity';
+import { 
+  Users, 
+  Router, 
+  MapPin, 
+  AlertTriangle, 
+  TrendingUp, 
+  Activity,
+  Shield,
+  Wifi
+} from 'lucide-react';
+import { DashboardStats } from '@/types';
 
-export default function AdminPage() {
-  const router = useRouter();
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const adminRoutes = [
-    {
-      title: "System Settings",
-      description: "Configure system preferences and parameters",
-      icon: Settings,
-      path: "/admin/settings",
-      color: "bg-blue-500"
-    },
-    {
-      title: "Locations",
-      description: "Manage provinces, districts, and towns",
-      icon: MapPin,
-      path: "/admin/locations",
-      color: "bg-green-500"
-    },
-    {
-      title: "Router Management",
-      description: "Manage network routers and access points",
-      icon: Router,
-      path: "/admin/routers",
-      color: "bg-purple-500"
-    },
-    {
-      title: "Staff Management",
-      description: "Manage staff accounts and assignments",
-      icon: UserCheck,
-      path: "/admin/staff",
-      color: "bg-orange-500"
-    },
-    {
-      title: "User Access Control",
-      description: "Monitor and control user network access",
-      icon: Users,
-      path: "/admin/users",
-      color: "bg-red-500"
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome to the network management system</p>
-      </div>
-
-      {/* Admin Navigation Cards */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Administration</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {adminRoutes.map((route) => {
-            const Icon = route.icon;
-            return (
-              <Card key={route.path} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(route.path)}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${route.color} text-white`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{route.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{route.description}</p>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-      
+    <DashboardLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Network Overview</h2>
-          <AdminStatsChart />
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">Network Management System Overview</p>
         </div>
-        
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-            <RecentActivity />
-          </div>
-          
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">+0% from last month</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">+0% from last month</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Routers</CardTitle>
+              <Router className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalRouters || 0}</div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <span className="text-green-600">{stats?.onlineRouters || 0} Online</span>
+                <span className="text-red-600">{stats?.offlineRouters || 0} Offline</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Staff Members</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalStaff || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Active system users
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Locations</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalTowns || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats?.totalProvinces || 0} Provinces, {stats?.totalDistricts || 0} Districts
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats?.activeAlerts || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                Require attention
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts and Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AdminStatsChart />
+          <RecentActivity />
+        </div>
+
+        {/* Additional Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+                Network Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Average Uptime</span>
+                  <span className="text-sm font-medium">{stats?.averageUptime || 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Total Bandwidth</span>
+                  <span className="text-sm font-medium">{stats?.totalBandwidth || 0} Mbps</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-blue-600" />
+                System Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Online Rate</span>
+                  <span className="text-sm font-medium text-green-600">
+                    {stats?.totalRouters ? Math.round((stats.onlineRouters / stats.totalRouters) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">System Status</span>
+                  <span className="text-sm font-medium text-green-600">Operational</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="w-5 h-5 mr-2 text-purple-600" />
+                Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Active Sessions</span>
+                  <span className="text-sm font-medium">0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Blocked Users</span>
+                  <span className="text-sm font-medium">0</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
