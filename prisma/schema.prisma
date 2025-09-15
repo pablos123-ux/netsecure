@@ -17,6 +17,7 @@ model User {
   email              String    @unique
   password           String
   role               Role      @default(STAFF)
+  image              String?
   assignedProvinceId String?
   assignedDistrictId String?
   isActive           Boolean   @default(true)

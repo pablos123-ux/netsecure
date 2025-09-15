@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { User, Mail, Lock, Upload } from 'lucide-react';
+import { User, Mail, Lock, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -15,6 +15,7 @@ interface UserProfile {
   name: string;
   email: string;
   role: 'ADMIN' | 'STAFF';
+  image?: string;
   assignedProvince?: { name: string };
   assignedDistrict?: { name: string };
 }
@@ -30,6 +31,8 @@ export default function ProfilePage() {
     newPassword: '',
     confirmPassword: ''
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -48,12 +51,71 @@ export default function ProfilePage() {
           newPassword: '',
           confirmPassword: ''
         });
+      } else {
+        throw new Error('Failed to fetch profile');
       }
     } catch (error) {
+      console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Only JPG, PNG, and WebP images are allowed');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsUploading(true);
+      const response = await fetch('/api/auth/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload image');
+      }
+
+      const data = await response.json();
+      
+      // Update the user's image in the UI
+      if (user) {
+        setUser({ ...user, image: data.imageUrl });
+      }
+      
+      toast.success('Profile picture updated successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -150,16 +212,41 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center space-y-4">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src="/placeholder-avatar.jpg" />
-                  <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
-                    {user?.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Button variant="outline" size="sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Photo
-                </Button>
+                <div className="relative group">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={user?.image || '/placeholder-avatar.jpg'} />
+                    <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
+                      {user?.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="icon"
+                      className="text-white hover:bg-white/20"
+                      onClick={triggerFileInput}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Upload className="w-5 h-5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/jpeg, image/png, image/webp"
+                  className="hidden"
+                  disabled={isUploading}
+                />
+                <p className="text-xs text-gray-500 text-center">
+                  JPG, PNG, or WebP. Max 5MB.
+                </p>
               </div>
               <div className="space-y-2">
                 <div>
