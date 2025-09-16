@@ -81,8 +81,8 @@ export default function UserAccessManagement() {
 
   const filteredUsers = connectedUsers.filter(user => {
     const matchesSearch = user.deviceName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.ipAddress.includes(searchTerm) ||
-                         user.macAddress.toLowerCase().includes(searchTerm.toLowerCase());
+                         user.ipAddress?.includes(searchTerm) ||
+                         user.macAddress?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterStatus === 'all' || 
                          (filterStatus === 'active' && user.status === 'ACTIVE' && !user.isBlocked) ||

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, logActivity } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { put } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 
@@ -36,24 +35,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const extension = mime.extension(file.type) || 'bin';
-    const filename = `${uuidv4()}.${extension}`;
-    
-    // In a production environment, you would want to upload to a cloud storage service
-    // For development, we'll save to the public/uploads directory
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    const filePath = join(uploadDir, filename);
-    const relativePath = `/uploads/${filename}`;
-    
-    // Convert file to buffer and save
+    // Convert file to base64
     const bytes = await file.arrayBuffer();
-    await writeFile(filePath, new Uint8Array(bytes));
+    const base64 = Buffer.from(bytes).toString('base64');
+    const imageUrl = `data:${file.type};base64,${base64}`;
 
     // Update user's profile picture in the database
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { image: relativePath },
+      data: { image: imageUrl },
       select: {
         id: true,
         name: true,
@@ -67,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      imageUrl: updatedUser.image,
+      imageUrl: imageUrl,
     });
   } catch (error) {
     console.error('Error uploading profile picture:', error);
