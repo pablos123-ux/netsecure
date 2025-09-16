@@ -20,13 +20,16 @@ interface User {
   name: string;
   email: string;
   role: 'ADMIN' | 'STAFF';
+  image?: string;
 }
 
 // Main layout wrapper with theme provider
 function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="flex min-h-screen bg-background">
+      <div
+        className="flex min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      >
         {children}
       </div>
     </ThemeProvider>
@@ -38,7 +41,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'ADMIN' | 'STAFF' } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -83,10 +86,22 @@ export default function AdminLayout({
         <div 
           className={cn(
             "flex-1 transition-all duration-300 ease-in-out",
-            "ml-16 md:ml-64"
+            // Sidebar offsets: no left margin on mobile to avoid right gap
+            "ml-0 md:ml-64"
           )}
         >
-          <main className="p-4 md:p-6 w-full max-w-[calc(100vw-4rem)] md:max-w-[calc(100vw-16rem)]">
+          <main
+            className={cn(
+              // Responsive padding and safe-area support
+              "p-3 sm:p-4 md:p-6",
+              // Ensure content doesn't overflow horizontally on small screens
+              "w-full max-w-full",
+              // Allow vertical scrolling of the content area
+              "min-h-screen overflow-y-auto",
+              // Respect iOS/Android bottom safe area for sticky elements if any
+              "pb-[max(1rem,env(safe-area-inset-bottom))]"
+            )}
+          >
             {children}
           </main>
         </div>

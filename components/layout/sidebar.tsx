@@ -59,6 +59,7 @@ interface SidebarProps {
     name: string;
     email: string;
     role: 'ADMIN' | 'STAFF';
+    image?: string;
   };
 }
 
@@ -149,12 +150,12 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <SidebarContext.Provider value={{ isCollapsed, toggleSidebar }}>
       {/* Mobile menu button */}
-        <div className="lg:hidden fixed top-4 left-4 z-50">
+        <div className="lg:hidden fixed top-[calc(1rem+env(safe-area-inset-top))] left-4 z-50">
           <Button
             variant="outline"
             size="sm"
             onClick={toggleMobileSidebar}
-            className="bg-background shadow-md"
+            className="bg-background shadow-md min-h-[40px] min-w-[40px]"
             aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
           >
             {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -176,22 +177,23 @@ export function Sidebar({ user }: SidebarProps) {
             'lg:translate-x-0',
             isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0',
             isCollapsed ? 'lg:w-20' : 'lg:w-64',
-            'shadow-lg lg:shadow-none' // Add shadow for mobile, remove on desktop
+            'shadow-lg lg:shadow-none', // Add shadow for mobile, remove on desktop
+            'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
           )}
         >
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className={cn("p-4 border-b border-gray-200 flex items-center justify-between", isCollapsed ? 'flex-col space-y-2 py-4' : 'px-6')}>
+            <div className={cn("p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between", isCollapsed ? 'flex-col space-y-2 py-4' : 'px-6')}>
               <div className={cn("flex items-center", isCollapsed ? 'flex-col space-y-2' : 'space-x-3')}>
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Router className="w-5 h-5 text-white" />
                 </div>
                 {!isCollapsed && (
                   <div>
-                    <h1 className="text-lg font-semibold text-foreground">
+                    <h1 className="text-base sm:text-lg font-semibold text-foreground">
                       Network Manager
                     </h1>
-                    <p className="text-xs text-muted-foreground">Rwanda Infrastructure</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">Rwanda Infrastructure</p>
                   </div>
                 )}
               </div>
@@ -200,7 +202,7 @@ export function Sidebar({ user }: SidebarProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="h-8 w-8"
+                  className="h-9 w-9"
                 >
                   <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -210,7 +212,7 @@ export function Sidebar({ user }: SidebarProps) {
                   variant="ghost"
                   size="icon"
                   onClick={toggleSidebar}
-                  className={cn("hidden lg:flex h-8 w-8", isCollapsed ? 'mt-2' : '')}
+                  className={cn("hidden lg:flex h-9 w-9", isCollapsed ? 'mt-2' : '')}
                 >
                   {isCollapsed ? <ChevronDown className="h-4 w-4 transform rotate-90" /> : <ChevronDown className="h-4 w-4 -rotate-90" />}
                 </Button>
@@ -218,7 +220,7 @@ export function Sidebar({ user }: SidebarProps) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-2 space-y-1">
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -228,15 +230,15 @@ export function Sidebar({ user }: SidebarProps) {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors',
+                      'flex items-center px-4 py-3 text-[15px] sm:text-sm font-medium rounded-md transition-colors',
                       pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/') // Handle sub-routes
                         ? 'bg-primary/10 text-primary'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                       isCollapsed ? 'justify-center' : 'px-4',
-                      'w-full' // Ensure full width for better touch targets on mobile
+                      'w-full'
                     )}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <Icon className="w-5 h-5 flex-shrink-0 mr-3" />
                     {!isCollapsed && <span>{item.title}</span>}
                   </Link>
                 );
@@ -244,7 +246,7 @@ export function Sidebar({ user }: SidebarProps) {
             </nav>
 
             {/* User Profile */}
-            <div className={cn("p-4 border-t border-gray-200", isCollapsed ? 'flex flex-col items-center' : '')}>
+            <div className={cn("p-3 sm:p-4 border-t border-gray-200", isCollapsed ? 'flex flex-col items-center' : '')}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -252,15 +254,15 @@ export function Sidebar({ user }: SidebarProps) {
                     className={cn("w-full p-2 h-auto justify-start hover:bg-accent", isCollapsed ? 'justify-center' : '')}
                   >
                     <div className={cn("flex items-center", isCollapsed ? 'flex-col' : 'space-x-3')}>
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarImage src="/placeholder-avatar.jpg" />
+                      <Avatar className="w-9 h-9 flex-shrink-0">
+                        <AvatarImage src={user.image || '/placeholder-avatar.jpg'} />
                         <AvatarFallback className="bg-blue-100 text-blue-700">
                           {user.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       {!isCollapsed && (
                         <div className="text-left">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-sm font-medium text-foreground truncate max-w-[10rem]">
                             {user.name}
                           </p>
                           <p className="text-xs text-muted-foreground">{user.role}</p>
@@ -271,7 +273,7 @@ export function Sidebar({ user }: SidebarProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => router.push('/profile')}>
+                  <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
                     <User className="w-4 h-4 mr-2" />
                     Profile Settings
                   </DropdownMenuItem>

@@ -53,7 +53,7 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 sm:p-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
@@ -118,10 +118,10 @@ export default function AdminDashboard() {
 
         {/* Charts and Activity */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 min-w-0">
             <AdminStatsChart />
           </div>
-          <div className="xl:col-span-1">
+          <div className="xl:col-span-1 min-w-0">
             <RecentActivity />
           </div>
         </div>
