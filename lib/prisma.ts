@@ -7,13 +7,8 @@ declare global {
 // Use global instance in development to prevent connection issues during hot reload
 const prisma = globalThis.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.NODE_ENV === 'production' 
-        ? process.env.DATABASE_URL 
-        : "file:./prisma/dev.db",
-    },
-  },
+  // Do not override datasources here; let Prisma use the datasource defined in prisma/schema.prisma
+  // and the DATABASE_URL from the environment. This ensures PostgreSQL is used in all environments.
 });
 
 if (process.env.NODE_ENV !== 'production') {

@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, logActivity } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { put } from '@vercel/blob';
-import { v4 as uuidv4 } from 'uuid';
-import mime from 'mime-types';
+
+// Ensure Node.js runtime and dynamic route to better support multipart/form-data in dev
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    if ((request as any).signal?.aborted) {
+      console.error('Avatar upload aborted before start');
+      return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
+    }
+
     const user = await requireAuth(request);
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

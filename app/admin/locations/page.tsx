@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Province, District, Town } from '@/types';
-import { Plus, Edit, Trash2, MapPin, ArrowLeft } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +28,7 @@ export default function LocationManagement() {
     provinceId: '',
     districtId: ''
   });
+  const [mapQuery, setMapQuery] = useState('Kigali, Rwanda');
   const router = useRouter();
 
   useEffect(() => {
@@ -131,28 +132,44 @@ export default function LocationManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Location Management</h1>
-                <p className="text-gray-600">Manage provinces, districts, and towns</p>
-              </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="bg-background border-b">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold">Location Management</h1>
+            <p className="text-muted-foreground">Manage provinces, districts, and towns</p>
+          </div>
+          {/* Map search and embed */}
+          <div className="grid gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                value={mapQuery}
+                onChange={(e) => setMapQuery(e.target.value)}
+                placeholder="Search on map (e.g., Kigali, Rwanda)"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="aspect-[16/9] w-full overflow-hidden rounded-md border bg-muted">
+              <iframe
+                title="Google Map"
+                className="h-full w-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+              />
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="provinces">Provinces</TabsTrigger>

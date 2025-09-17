@@ -80,21 +80,21 @@ export default function SystemSettings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="bg-background shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-                <p className="text-gray-600">Configure system preferences and parameters</p>
+                <h1 className="text-2xl font-bold">System Settings</h1>
+                <p className="text-muted-foreground">Configure system preferences and parameters</p>
               </div>
             </div>
             <Button onClick={handleSave} disabled={saving}>
@@ -134,7 +134,7 @@ export default function SystemSettings() {
                     onChange={(e) => updateSetting('system_name', e.target.value)}
                     placeholder="Rwanda Network Management System"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Display name shown in the application header
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export default function SystemSettings() {
                     value={getSetting('max_bandwidth_threshold')}
                     onChange={(e) => updateSetting('max_bandwidth_threshold', e.target.value)}
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Alert when router bandwidth usage exceeds this percentage
                   </p>
                 </div>
@@ -210,7 +210,7 @@ export default function SystemSettings() {
                     value={getSetting('monitoring_interval')}
                     onChange={(e) => updateSetting('monitoring_interval', e.target.value)}
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     How often to collect data from routers
                   </p>
                 </div>
@@ -224,7 +224,7 @@ export default function SystemSettings() {
                     value={getSetting('data_retention_days')}
                     onChange={(e) => updateSetting('data_retention_days', e.target.value)}
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     How long to keep historical monitoring data
                   </p>
                 </div>
@@ -235,7 +235,7 @@ export default function SystemSettings() {
                     onCheckedChange={(checked) => updateSetting('auto_discovery', checked.toString())}
                   />
                   <Label htmlFor="auto_discovery">Enable Auto-Discovery</Label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Automatically detect new routers on the network
                   </p>
                 </div>
