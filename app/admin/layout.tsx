@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -44,30 +44,41 @@ export default function AdminLayout({
   const [user, setUser] = useState<{ id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const isMounted = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     fetchUser();
+    return () => {
+      isMounted.current = false;
+      if (controllerRef.current) controllerRef.current.abort();
+    };
   }, []);
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      if (controllerRef.current) controllerRef.current.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const response = await fetch('/api/auth/me', { signal: controller.signal });
       if (response.ok) {
         const userData = await response.json();
         if (userData.role !== 'ADMIN') {
           router.push('/staff');
           return;
         }
-        setUser(userData);
+        if (isMounted.current) setUser(userData);
       } else {
         router.push('/login');
       }
     } catch (error) {
+      if ((error as any)?.name === 'AbortError') return;
       console.error('Error fetching user:', error);
       toast.error('Failed to load user data');
       router.push('/login');
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
+      controllerRef.current = null;
     }
   };
 

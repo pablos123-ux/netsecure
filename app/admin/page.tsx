@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { AdminStatsChart } from '@/components/admin/admin-stats-chart';
@@ -13,31 +13,94 @@ import {
   TrendingUp, 
   Activity,
   Shield,
-  Wifi
+  Wifi,
+  RefreshCw,
+  Clock
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { DashboardStats } from '@/types';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isCached, setIsCached] = useState(false);
+  const isMounted = useRef(true);
+  const currentController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchStats, 15000); // Refresh every 15 seconds for faster updates
+    return () => {
+      isMounted.current = false;
+      clearInterval(interval);
+      if (currentController.current) {
+        currentController.current.abort();
+      }
+    };
   }, []);
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats');
+      // Abort any in-flight request before starting a new one
+      if (currentController.current) {
+        currentController.current.abort();
+      }
+      const controller = new AbortController();
+      currentController.current = controller;
+      const startTime = performance.now();
+      const response = await fetch('/api/admin/stats', {
+        cache: 'no-store', // Ensure fresh data
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+        signal: controller.signal,
+      });
+      
+      const endTime = performance.now();
+      console.log(`Stats fetch took ${Math.round(endTime - startTime)}ms`);
+      
       if (response.ok) {
         const data = await response.json();
-        setStats(data);
+        if (isMounted.current) {
+          setStats(data);
+          setIsCached(data.cached || false);
+          setLastRefresh(new Date());
+        }
+        
+        // Show warning if using cached data
+        if (data.warning) {
+          console.warn('Stats API Warning:', data.warning);
+        }
+      } else if (response.status === 503) {
+        // Handle service unavailable gracefully
+        const errorData = await response.json();
+        if (errorData.warning) {
+          console.warn('Database unavailable, using fallback data');
+        }
       }
     } catch (error) {
+      // Ignore abort errors which are expected during navigation/cleanup
+      if ((error as any)?.name === 'AbortError') return;
       console.error('Error fetching stats:', error);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
+      // Clear controller reference if this request finished
+      currentController.current = null;
+    }
+  };
+
+  const refreshStats = async () => {
+    setLoading(true);
+    try {
+      // Clear cache first
+      await fetch('/api/admin/stats/refresh', { method: 'POST' });
+      // Then fetch fresh data
+      await fetchStats();
+    } catch (error) {
+      console.error('Error refreshing stats:', error);
     }
   };
 
@@ -55,9 +118,36 @@ export default function AdminDashboard() {
     <DashboardLayout>
       <div className="space-y-6 p-4 sm:p-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Network Management System Overview</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Network Management System Overview</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {lastRefresh && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>Updated {lastRefresh.toLocaleTimeString()}</span>
+                {isCached && (
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                    Cached
+                  </span>
+                )}
+              </div>
+            )}
+            
+            <Button 
+              onClick={refreshStats} 
+              disabled={loading}
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}

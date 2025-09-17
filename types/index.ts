@@ -105,8 +105,8 @@ export interface DashboardStats {
   
   // Staff Stats
   totalStaff: number;
-  activeStaff: number;
-  adminCount: number;
+  activeStaff?: number;
+  adminCount?: number;
   
   // Location Stats
   totalProvinces: number;
@@ -116,16 +116,22 @@ export interface DashboardStats {
   // Network Stats
   averageUptime: number;
   totalBandwidth: number;
-  networkStatus: 'stable' | 'degraded' | 'outage' | 'maintenance';
+  networkStatus?: 'stable' | 'degraded' | 'outage' | 'maintenance';
   
   // User Stats
-  totalUsers: number;
-  activeUsers: number;
+  totalUsers?: number;
+  activeUsers?: number;
   
   // System Stats
   activeAlerts: number;
-  activeSessions: number;
-  blockedIPs: number;
+  activeSessions?: number;
+  blockedIPs?: number;
+  
+  // Cache and Performance Info
+  cached?: boolean;
+  lastUpdated?: string;
+  warning?: string;
+  cacheAge?: number;
   
   // Recent Activity
   recentAlerts?: Array<{
