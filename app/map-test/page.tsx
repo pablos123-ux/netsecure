@@ -1,6 +1,6 @@
-export const dynamic = "force-static";
+import dynamic from "next/dynamic";
 
-import GoogleMap from "@/components/GoogleMap";
+const GoogleMap = dynamic(() => import("@/components/GoogleMap"), { ssr: false });
 
 export default function MapTestPage() {
   return (

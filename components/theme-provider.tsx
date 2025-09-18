@@ -17,8 +17,16 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Force dark theme on the HTML element
   React.useEffect(() => {
+    if (!mounted) return;
+
     const root = window.document.documentElement;
     
     const observer = new MutationObserver((mutations) => {
@@ -42,7 +50,12 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
     document.body.style.colorScheme = isDark ? 'dark' : 'light';
 
     return () => observer.disconnect();
-  }, []);
+  }, [mounted]);
+
+  if (!mounted) {
+    // Render nothing on server and during hydration to avoid mismatch
+    return null;
+  }
 
   return (
     <NextThemesProvider 
