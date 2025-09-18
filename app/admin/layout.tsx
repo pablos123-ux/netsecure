@@ -148,6 +148,38 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Load recent activities as notifications
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId: any;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/admin/activity?limit=10`);
+        if (!isMounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.activities || []);
+        } else {
+          setNotifications([]);
+        }
+      } catch (e) {
+        if (isMounted) setNotifications([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    load();
+    intervalId = setInterval(load, 20000); // refresh every 20s
+
+    return () => {
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -173,11 +205,11 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
           </Button>
         </div>
         <div className="flex-1">
-          <div className="relative max-w-xs sm:max-w-sm">
+          <div className="relative max-w-[9rem] sm:max-w-xs md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              className="pl-9"
+              className="pl-9 h-8 md:h-9 text-sm"
             />
           </div>
         </div>
@@ -200,9 +232,9 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
                 <div className="p-3 text-sm text-muted-foreground">No notifications</div>
               ) : (
                 <div className="max-h-60 sm:max-h-80 overflow-auto">
-                  {notifications.slice(0, 5).map((n) => (
+                  {notifications.map((n: any) => (
                     <div key={n.id} className="px-3 py-2 text-sm border-b last:border-b-0">
-                      <div className="font-medium">{n.action?.replaceAll('_',' ') || 'Activity'}</div>
+                      <div className="font-medium">{n.action?.toString().replaceAll('_',' ') || 'Activity'}</div>
                       <div className="text-muted-foreground line-clamp-2">{n.details || 'No details'}</div>
                       <div className="text-xs text-muted-foreground mt-1">{new Date(n.timestamp).toLocaleString()}</div>
                     </div>

@@ -14,12 +14,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
+    // Find user by email (select minimal fields for speed)
     const user = await prisma.user.findUnique({
       where: { email },
-      include: {
-        assignedProvince: true,
-        assignedDistrict: true,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        image: true,
+        assignedProvinceId: true,
+        assignedDistrictId: true,
       },
     });
 

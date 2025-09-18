@@ -16,6 +16,7 @@ if (!SECRET_KEY) {
 
 const JWT_SECRET_KEY = SECRET_KEY;
 
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
 }
@@ -40,7 +41,9 @@ export function verifyToken(token: string): { userId: string; role: string } | n
   }
 }
 
-export async function getCurrentUser(request: NextRequest) {
+type AuthOptions = { includeRelations?: boolean };
+
+export async function getCurrentUser(request: NextRequest, options?: AuthOptions) {
   try {
     const token = request.cookies.get('auth-token')?.value;
     
@@ -53,12 +56,14 @@ export async function getCurrentUser(request: NextRequest) {
       return null;
     }
 
+    const includeRelations = options?.includeRelations === true;
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      include: {
-        assignedProvince: true,
-        assignedDistrict: true,
-      },
+      ...(includeRelations
+        ? { include: { assignedProvince: true, assignedDistrict: true } }
+        : { select: { id: true, name: true, email: true, role: true } }
+      ),
     });
 
     return user;
@@ -68,8 +73,8 @@ export async function getCurrentUser(request: NextRequest) {
   }
 }
 
-export async function requireAuth(request: NextRequest, requiredRole?: 'ADMIN' | 'STAFF') {
-  const user = await getCurrentUser(request);
+export async function requireAuth(request: NextRequest, requiredRole?: 'ADMIN' | 'STAFF', options?: AuthOptions) {
+  const user = await getCurrentUser(request, options);
   
   if (!user) {
     throw new Error('Authentication required');

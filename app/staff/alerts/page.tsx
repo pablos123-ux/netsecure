@@ -1,5 +1,3 @@
-'use client';
-
 export default function StaffAlertsPage() {
   return (
     <div className="space-y-4">

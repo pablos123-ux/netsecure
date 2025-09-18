@@ -18,6 +18,9 @@ export default function RootLayout({
     <html lang="en" className={`${fontSans.variable} font-sans`} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+          </head>
           <div className="min-h-screen bg-background">
             {children}
           </div>

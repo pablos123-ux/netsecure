@@ -194,6 +194,16 @@ export function Sidebar({ user }: SidebarProps) {
                 )}
               </div>
               <div className={cn("flex items-center space-x-2", isCollapsed ? 'flex-col space-y-2' : 'space-x-2')}>
+                {/* Mobile close button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMobileSidebar}
+                  aria-label="Close menu"
+                  className="lg:hidden h-9 w-9"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

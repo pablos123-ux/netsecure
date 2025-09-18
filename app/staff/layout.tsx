@@ -55,29 +55,7 @@ export default function StaffLayout({
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/staff/alerts');
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) setAlerts(data.alerts || []);
-        } else {
-          if (isMounted) setAlerts([]);
-        }
-      } catch {
-        if (isMounted) setAlerts([]);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    load();
-    return () => { isMounted = false; };
-  }, []);
-
-  // (Removed misplaced alerts loading effect; it's now inside Topbar)
+  // Notifications are loaded inside Topbar via activity API
 
   if (loading || !user) {
     return (
@@ -120,8 +98,40 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
 function Topbar({ user }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } }) {
   const { toggleMobileSidebar } = useSidebar();
   const router = useRouter();
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Load recent activities as notifications (staff)
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId: any;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/activity?limit=10');
+        if (!isMounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          setActivities(data.activities || []);
+        } else {
+          setActivities([]);
+        }
+      } catch {
+        if (isMounted) setActivities([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    load();
+    intervalId = setInterval(load, 20000);
+
+    return () => {
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -148,11 +158,11 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
           </Button>
         </div>
         <div className="flex-1">
-          <div className="relative max-w-xs sm:max-w-sm">
+          <div className="relative max-w-[9rem] sm:max-w-xs md:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              className="pl-9"
+              className="pl-9 h-8 md:h-9 text-sm"
             />
           </div>
         </div>
@@ -161,9 +171,9 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-9 px-2 relative" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
-                {alerts.length > 0 && (
+                {activities.length > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
-                    {alerts.length}
+                    {activities.length}
                   </span>
                 )}
               </Button>
@@ -171,15 +181,15 @@ function Topbar({ user }: { user: { id: string; name: string; email: string; rol
             <DropdownMenuContent align="end" className="w-64 sm:w-80 max-h-60 sm:max-h-80">
               {loading ? (
                 <div className="p-3 text-sm text-muted-foreground">Loading...</div>
-              ) : alerts.length === 0 ? (
+              ) : activities.length === 0 ? (
                 <div className="p-3 text-sm text-muted-foreground">No notifications</div>
               ) : (
                 <div className="max-h-60 sm:max-h-80 overflow-auto">
-                  {alerts.slice(0,5).map((a) => (
-                    <div key={a.id} className="px-3 py-2 text-sm border-b last:border-b-0">
-                      <div className="font-medium">{a.type?.replaceAll('_',' ') || 'Alert'}</div>
-                      <div className="text-muted-foreground line-clamp-2">{a.message || a.description || 'No details'}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{new Date(a.createdAt).toLocaleString()}</div>
+                  {activities.map((n: any) => (
+                    <div key={n.id} className="px-3 py-2 text-sm border-b last:border-b-0">
+                      <div className="font-medium">{n.action?.toString().replaceAll('_',' ') || 'Activity'}</div>
+                      <div className="text-muted-foreground line-clamp-2">{n.details || 'No details'}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{new Date(n.timestamp).toLocaleString()}</div>
                     </div>
                   ))}
                 </div>

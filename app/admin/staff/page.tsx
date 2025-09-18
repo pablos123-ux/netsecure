@@ -205,12 +205,12 @@ export default function StaffManagement() {
                   </div>
                   <div>
                     <Label htmlFor="province">Assigned Province</Label>
-                    <Select value={formData.assignedProvinceId} onValueChange={handleProvinceChange}>
+                    <Select value={formData.assignedProvinceId} onValueChange={(value) => handleProvinceChange(value === 'NONE' ? '' : value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select province" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No assignment</SelectItem>
+                        <SelectItem value="NONE">No assignment</SelectItem>
                         {provinces.map((province) => (
                           <SelectItem key={province.id} value={province.id}>
                             {province.name}
@@ -222,12 +222,12 @@ export default function StaffManagement() {
                   {formData.assignedProvinceId && (
                     <div>
                       <Label htmlFor="district">Assigned District (Optional)</Label>
-                      <Select value={formData.assignedDistrictId} onValueChange={(value) => setFormData({ ...formData, assignedDistrictId: value })}>
+                      <Select value={formData.assignedDistrictId} onValueChange={(value) => setFormData({ ...formData, assignedDistrictId: value === 'ALL' ? '' : value })}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select district" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All districts in province</SelectItem>
+                          <SelectItem value="ALL">All districts in province</SelectItem>
                           {districts.map((district) => (
                             <SelectItem key={district.id} value={district.id}>
                               {district.name}

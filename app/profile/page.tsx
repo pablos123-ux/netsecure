@@ -219,12 +219,12 @@ export default function ProfilePage() {
                       {user?.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     <Button 
                       type="button"
                       variant="ghost" 
                       size="icon"
-                      className="text-white hover:bg-white/20"
+                      className="text-white hover:bg-white/20 pointer-events-auto"
                       onClick={triggerFileInput}
                       disabled={isUploading}
                     >
@@ -236,6 +236,11 @@ export default function ProfilePage() {
                     </Button>
                   </div>
                 </div>
+                {user?.name && (
+                  <p className="mt-3 text-sm font-medium text-gray-900 text-center sm:hidden relative z-10">
+                    {user.name}
+                  </p>
+                )}
                 <input
                   type="file"
                   ref={fileInputRef}

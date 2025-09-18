@@ -1,5 +1,3 @@
-'use client';
-
 export default function StaffRoutersPage() {
   return (
     <div className="space-y-4">

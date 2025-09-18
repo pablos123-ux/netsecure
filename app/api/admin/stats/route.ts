@@ -6,7 +6,7 @@ import { withApiPerformanceLogging } from '@/lib/performance';
 // Cache for stats data (in-memory cache)
 let statsCache: any = null;
 let cacheTimestamp = 0;
-const CACHE_DURATION = 15000; // 15 seconds cache for faster updates
+const CACHE_DURATION = 30000; // 30 seconds cache for faster updates
 
 // Fallback data when database is unavailable
 const fallbackStats = {
@@ -38,10 +38,10 @@ export const GET = withApiPerformanceLogging(async (request: NextRequest) => {
       });
     }
 
-    // Test database connection with shorter timeout for SQLite
+    // Ensure database connection is ready with a reasonable timeout
     const connectionPromise = prisma.$connect();
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Connection timeout')), 2000)
+      setTimeout(() => reject(new Error('Connection timeout')), 3000)
     );
 
     await Promise.race([connectionPromise, timeoutPromise]);

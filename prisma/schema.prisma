@@ -33,6 +33,7 @@ model User {
   createdRouters     Router[]  @relation("RouterCreatedBy")
   
   @@map("users")
+  @@index([role])
 }
 
 model Province {
@@ -67,6 +68,7 @@ model District {
   @@unique([name, provinceId])
   @@unique([code, provinceId])
   @@map("districts")
+  @@index([provinceId])
 }
 
 model Town {
@@ -85,6 +87,7 @@ model Town {
   @@unique([name, districtId])
   @@unique([code, districtId])
   @@map("towns")
+  @@index([districtId])
 }
 
 model Router {
@@ -112,6 +115,9 @@ model Router {
   connectedUsers ConnectedUser[]
   
   @@map("routers")
+  @@index([status])
+  @@index([townId])
+  @@index([createdById])
 }
 
 model ConnectedUser {
@@ -135,6 +141,7 @@ model ConnectedUser {
   
   @@unique([macAddress, routerId])
   @@map("connected_users")
+  @@index([routerId])
 }
 
 model Log {
@@ -150,6 +157,7 @@ model Log {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@map("logs")
+  @@index([userId])
 }
 
 model Alert {
@@ -169,6 +177,8 @@ model Alert {
   resolver  User?       @relation(fields: [resolvedBy], references: [id])
   
   @@map("alerts")
+  @@index([status])
+  @@index([routerId])
 }
 
 model Settings {
