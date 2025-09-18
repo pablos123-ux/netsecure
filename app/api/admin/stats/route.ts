@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { withApiPerformanceLogging } from '@/lib/performance';
 
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic';
+
 // Cache for stats data (in-memory cache)
 let statsCache: any = null;
 let cacheTimestamp = 0;

@@ -12,10 +12,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-    
-    return NextResponse.json(userWithoutPassword);
+    // Return user directly since password is not included in user object
+    return NextResponse.json(user);
   } catch (error) {
     console.error('Error getting current user:', error);
     return NextResponse.json(
