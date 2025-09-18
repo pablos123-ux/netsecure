@@ -189,3 +189,8 @@ export interface ConnectedUser {
   lastSeen: Date;
   router?: Router;
 }
+
+declare global {
+  var statsCache: any;
+  var cacheTimestamp: number;
+}
