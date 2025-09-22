@@ -206,7 +206,7 @@ export function AdminStatsChart() {
                     outerRadius={isMobile ? 72 : 84}
                     fill="#8884d8"
                     dataKey="value"
-                    label={isMobile ? false : ({ province, percent }) => `${province} ${(percent * 100).toFixed(0)}%`}
+                    label={isMobile ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
