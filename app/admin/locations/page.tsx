@@ -185,6 +185,29 @@ export default function LocationManagement() {
     }
   };
 
+  const createSampleData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/locations/sample-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast.success('Sample data created successfully');
+        await fetchData();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create sample data');
+      }
+    } catch (error) {
+      console.error('Error creating sample data:', error);
+      toast.error('Failed to create sample data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openDialog = (type: string) => {
     setEditingItem(null);
     // Reset form data and set default values based on type
