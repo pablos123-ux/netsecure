@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request, 'STAFF', { includeRelations: true }) as User;
+    const user = await requireAuth(request, 'STAFF', { includeRelations: true }) as any;
 
     // Build filter based on staff assignment
     const whereClause: any = {};

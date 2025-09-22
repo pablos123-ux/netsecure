@@ -12,11 +12,23 @@ import { Alert as AlertType } from '@/types';
 import { AlertTriangle, CheckCircle2, XCircle, Clock, Router, MapPin, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface ExtendedAlert extends AlertType {
+interface ExtendedAlert {
+  id: string;
+  routerId: string;
+  message: string;
+  status: 'ACTIVE' | 'RESOLVED' | 'DISMISSED';
+  createdAt: Date;
+  updatedAt: Date;
+  userId?: string;
   router?: {
     id: string;
     name: string;
     ipAddress: string;
+    model?: string;
+    status?: string;
+    uptime?: number;
+    bandwidth?: number;
+    capacity?: number;
     town?: {
       name: string;
       district?: {

@@ -46,8 +46,7 @@ export async function GET(request: NextRequest) {
         assignedDistrict: true,
         _count: {
           select: {
-            logs: true,
-            connectedUsers: true
+            logs: true
           }
         }
       },

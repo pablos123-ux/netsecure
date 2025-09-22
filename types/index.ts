@@ -6,7 +6,8 @@ export interface User {
   assignedProvinceId?: string;
   assignedDistrictId?: string;
   isActive: boolean;
-  lastLogin?: Date;
+  lastLogin?: Date | null;
+  image?: string | null;
   createdAt: Date;
   updatedAt: Date;
   assignedProvince?: Province;
@@ -70,6 +71,8 @@ export interface Router {
   capacity: number;
   townId: string;
   location?: string;
+  bandwidthLimit?: number;
+  bandwidthLimitEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastSeen?: Date;
@@ -102,37 +105,38 @@ export interface DashboardStats {
   totalRouters: number;
   onlineRouters: number;
   offlineRouters: number;
-  
+
   // Staff Stats
   totalStaff: number;
   activeStaff?: number;
   adminCount?: number;
-  
+
   // Location Stats
   totalProvinces: number;
   totalDistricts: number;
   totalTowns: number;
-  
+  locations?: number; // Total locations (provinces + districts + towns)
+
   // Network Stats
   averageUptime: number;
   totalBandwidth: number;
   networkStatus?: 'stable' | 'degraded' | 'outage' | 'maintenance';
-  
+
   // User Stats
   totalUsers?: number;
   activeUsers?: number;
-  
+
   // System Stats
   activeAlerts: number;
   activeSessions?: number;
   blockedIPs?: number;
-  
+
   // Cache and Performance Info
   cached?: boolean;
   lastUpdated?: string;
   warning?: string;
   cacheAge?: number;
-  
+
   // Recent Activity
   recentAlerts?: Array<{
     id: string;

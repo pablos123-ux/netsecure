@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request, 'STAFF');
+    const user = await requireAuth(request, 'STAFF', { includeRelations: true }) as any;
 
     // Get routers assigned to the staff's district or province
     const routers = await prisma.router.findMany({

@@ -60,7 +60,8 @@ export default function UserAccessManagement() {
       }
     } catch (error) {
       console.error(`Error ${isBlocked ? 'unblocking' : 'blocking'} user:`, error);
-      toast.error(error.message || 'Operation failed. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Operation failed. Please try again.';
+      toast.error(errorMessage);
       // Re-fetch to ensure UI is in sync with server state
       await fetchConnectedUsers();
     } finally {

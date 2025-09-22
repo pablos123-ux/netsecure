@@ -21,8 +21,10 @@ const fallbackStats = {
   totalProvinces: 0,
   totalDistricts: 0,
   totalTowns: 0,
+  locations: 0, // Add missing locations property
   averageUptime: 0,
   totalBandwidth: 0,
+  activeUsers: 0, // Add active users property
   cached: true,
   lastUpdated: new Date().toISOString()
 };
@@ -111,8 +113,10 @@ export const GET = withApiPerformanceLogging(async (request: NextRequest) => {
       totalProvinces: locationStats[0],
       totalDistricts: locationStats[1],
       totalTowns: locationStats[2],
+      locations: locationStats[0] + locationStats[1] + locationStats[2], // Total locations
       averageUptime,
       totalBandwidth: bandwidthStats._sum.bandwidth || 0,
+      activeUsers: 0, // Add active users count - can be calculated from connected users if needed
       cached: false,
       lastUpdated: new Date().toISOString()
     };

@@ -73,7 +73,11 @@ export async function GET(request: NextRequest) {
         ]
       },
       include: {
-        district: true,
+        district: {
+          include: {
+            province: true
+          }
+        },
         _count: {
           select: {
             routers: true
@@ -115,7 +119,7 @@ export async function GET(request: NextRequest) {
           routerCount: t._count?.routers || 0
         }))
       },
-      recommendations: []
+      recommendations: [] as string[]
     };
 
     // Generate recommendations based on the data

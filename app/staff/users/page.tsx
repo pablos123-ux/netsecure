@@ -12,6 +12,7 @@ import { Users, Activity, MapPin, Shield, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExtendedUser extends User {
+  image?: string | null;
   _count?: {
     logs: number;
     connectedUsers: number;
@@ -70,7 +71,7 @@ export default function StaffUsersPage() {
       .slice(0, 2);
   };
 
-  const formatLastLogin = (date: Date | null) => {
+  const formatLastLogin = (date: Date | null | undefined) => {
     if (!date) return 'Never';
     try {
       const loginDate = new Date(date);
