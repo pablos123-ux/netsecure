@@ -39,21 +39,32 @@ export default function UserAccessManagement() {
     }
   };
 
+  const [blockingUsers, setBlockingUsers] = useState<Record<string, boolean>>({});
+
   const handleBlockUser = async (userId: string, isBlocked: boolean) => {
     try {
+      setBlockingUsers(prev => ({ ...prev, [userId]: true }));
+      
       const endpoint = isBlocked ? 'unblock' : 'block';
       const response = await fetch(`/api/admin/connected-users/${userId}/${endpoint}`, {
         method: 'POST',
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        toast.success(`User ${isBlocked ? 'unblocked' : 'blocked'} successfully`);
-        fetchConnectedUsers();
+        toast.success(data.message || `User ${isBlocked ? 'unblocked' : 'blocked'} successfully`);
+        await fetchConnectedUsers();
       } else {
-        toast.error(`Failed to ${isBlocked ? 'unblock' : 'block'} user`);
+        throw new Error(data.error || `Failed to ${isBlocked ? 'unblock' : 'block'} user`);
       }
     } catch (error) {
-      toast.error('Operation failed');
+      console.error(`Error ${isBlocked ? 'unblocking' : 'blocking'} user:`, error);
+      toast.error(error.message || 'Operation failed. Please try again.');
+      // Re-fetch to ensure UI is in sync with server state
+      await fetchConnectedUsers();
+    } finally {
+      setBlockingUsers(prev => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -234,11 +245,20 @@ export default function UserAccessManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Switch
-                          checked={!user.isBlocked}
-                          onCheckedChange={() => handleBlockUser(user.id, user.isBlocked)}
-                        />
-                        <span className="text-sm text-gray-600">
+                        <div className="relative">
+                          <Switch
+                            checked={!user.isBlocked}
+                            disabled={blockingUsers[user.id]}
+                            onCheckedChange={() => handleBlockUser(user.id, user.isBlocked)}
+                            className={blockingUsers[user.id] ? 'opacity-50 cursor-not-allowed' : ''}
+                          />
+                          {blockingUsers[user.id] && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-sm ${user.isBlocked ? 'text-red-600' : 'text-green-600'}`}>
                           {user.isBlocked ? 'Blocked' : 'Allowed'}
                         </span>
                       </div>

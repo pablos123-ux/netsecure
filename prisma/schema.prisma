@@ -100,6 +100,7 @@ model Router {
   uptime      Int          @default(0) // in seconds
   bandwidth   Float        @default(0) // current usage in Mbps
   capacity    Float        @default(100) // max capacity in Mbps
+  bandwidthLimit Float?    // per-user bandwidth limit in Mbps (null means no limit)
   location    String?      // physical location description
   townId      String
   createdById String

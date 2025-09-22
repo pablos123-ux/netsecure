@@ -95,11 +95,34 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
   );
 }
 
-function Topbar({ user }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } }) {
+function Topbar({ user: initialUser }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } }) {
   const { toggleMobileSidebar } = useSidebar();
   const router = useRouter();
+  const [user, setUser] = useState(initialUser);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Fetch latest user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data in Topbar:', error);
+      }
+    };
+
+    fetchUser();
+
+    // Refresh user data periodically (every 30 seconds)
+    const intervalId = setInterval(fetchUser, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Load recent activities as notifications (staff)
   useEffect(() => {

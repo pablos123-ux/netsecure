@@ -40,7 +40,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', { cache: 'no-store' });
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
@@ -62,27 +62,33 @@ export default function ProfilePage() {
     }
   };
 
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Only JPG, PNG, and WebP images are allowed');
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Only JPG, PNG, and WebP images are allowed');
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+
+      // Create preview URL for immediate feedback
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
       setIsUploading(true);
       const response = await fetch('/api/auth/profile/avatar', {
         method: 'POST',
@@ -95,16 +101,42 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      
-      // Update the user's image in the UI
+
+      // Update the user's image in the UI immediately
       if (user) {
-        setUser({ ...user, image: data.imageUrl });
+        const updatedUser = {
+          ...user,
+          image: data.imageUrl
+        };
+        setUser(updatedUser);
+
+        // Refresh the session asynchronously (non-blocking)
+        setTimeout(async () => {
+          try {
+            const sessionResponse = await fetch('/api/auth/me', { cache: 'no-store' });
+            if (sessionResponse.ok) {
+              const sessionData = await sessionResponse.json();
+              setUser(sessionData);
+            }
+          } catch (error) {
+            console.error('Error refreshing session after avatar upload:', error);
+          }
+        }, 100); // Small delay to let UI update first
       }
-      
+
+      // Clean up preview URL
+      URL.revokeObjectURL(previewUrl);
+      setPreviewImage(null);
+
       toast.success('Profile picture updated successfully');
     } catch (error) {
       console.error('Error uploading image:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+      // Clean up preview URL on error
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+        setPreviewImage(null);
+      }
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -120,6 +152,19 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.email.trim()) {
+      toast.error('Name and email are required');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -127,20 +172,43 @@ export default function ProfilePage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email
+          name: formData.name.trim(),
+          email: formData.email.trim()
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        // Update local user state immediately
+        if (user) {
+          const updatedUser = {
+            ...user,
+            name: formData.name.trim(),
+            email: formData.email.trim()
+          };
+          setUser(updatedUser);
+
+          // Refresh the session asynchronously (non-blocking)
+          setTimeout(async () => {
+            try {
+              const sessionResponse = await fetch('/api/auth/me', { cache: 'no-store' });
+              if (sessionResponse.ok) {
+                const sessionData = await sessionResponse.json();
+                setUser(sessionData);
+              }
+            } catch (error) {
+              console.error('Error refreshing session after profile update:', error);
+            }
+          }, 100); // Small delay to let UI update first
+        }
         toast.success('Profile updated successfully');
-        fetchProfile();
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to update profile');
+        throw new Error(data.error || 'Failed to update profile');
       }
     } catch (error) {
-      toast.error('Failed to update profile');
+      console.error('Update profile error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -214,15 +282,15 @@ export default function ProfilePage() {
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative group">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={user?.image || '/placeholder-avatar.jpg'} />
+                    <AvatarImage src={previewImage || user?.image || '/placeholder-avatar.jpg'} />
                     <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
                       {user?.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <Button 
+                    <Button
                       type="button"
-                      variant="ghost" 
+                      variant="ghost"
                       size="icon"
                       className="text-white hover:bg-white/20 pointer-events-auto"
                       onClick={triggerFileInput}
@@ -235,6 +303,11 @@ export default function ProfilePage() {
                       )}
                     </Button>
                   </div>
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
                 </div>
                 {user?.name && (
                   <p className="mt-3 text-sm font-medium text-gray-900 text-center sm:hidden relative z-10">

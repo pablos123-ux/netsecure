@@ -9,10 +9,14 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <main className="p-3 sm:p-4 lg:p-8 w-full max-w-full overflow-x-hidden">
-        {children}
-      </main>
+    <div className="min-h-screen bg-background">
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1 w-full overflow-x-hidden px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4">
+          <div className="max-w-[2000px] mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
       <Toaster />
     </div>
   );

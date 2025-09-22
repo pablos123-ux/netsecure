@@ -31,7 +31,7 @@ interface ExtendedAlert extends AlertType {
   };
 }
 
-export default function StaffAlertsPage() {
+export default function AdminAlertsPage() {
   const [alerts, setAlerts] = useState<ExtendedAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export default function StaffAlertsPage() {
         params.append('status', statusFilter);
       }
 
-      const response = await fetch(`/api/staff/alerts?${params}`);
+      const response = await fetch(`/api/admin/alerts?${params}`);
       if (response.ok) {
         const data = await response.json();
         setAlerts(data.alerts || []);
@@ -69,7 +69,7 @@ export default function StaffAlertsPage() {
   const handleAlertAction = async (alertId: string, action: 'RESOLVE' | 'DISMISS') => {
     try {
       setActionLoading(alertId);
-      const response = await fetch('/api/staff/alerts', {
+      const response = await fetch('/api/admin/alerts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertId, action })
@@ -107,9 +107,9 @@ export default function StaffAlertsPage() {
   const getSeverityBadge = (alert: ExtendedAlert) => {
     // Simple severity detection based on message content
     const message = alert.message.toLowerCase();
-    if (message.includes('offline') || message.includes('error')) {
+    if (message.includes('offline') || message.includes('error') || message.includes('critical')) {
       return <Badge className="bg-red-100 text-red-800">High</Badge>;
-    } else if (message.includes('maintenance')) {
+    } else if (message.includes('maintenance') || message.includes('warning')) {
       return <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>;
     } else {
       return <Badge className="bg-blue-100 text-blue-800">Low</Badge>;
@@ -131,7 +131,7 @@ export default function StaffAlertsPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Alerts</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Alerts Management</h1>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
@@ -143,8 +143,8 @@ export default function StaffAlertsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Alerts</h1>
-          <p className="text-muted-foreground">Monitor and respond to network alerts in your area</p>
+          <h1 className="text-3xl font-bold tracking-tight">Alerts Management</h1>
+          <p className="text-muted-foreground">Monitor and manage network alerts across all areas</p>
         </div>
       </div>
 
@@ -190,7 +190,7 @@ export default function StaffAlertsPage() {
                 <div className="text-2xl font-bold">
                   {alerts?.length || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">In your area</p>
+                <p className="text-xs text-muted-foreground">System-wide</p>
               </CardContent>
             </Card>
             <Card>
@@ -278,7 +278,7 @@ export default function StaffAlertsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Active Alerts</CardTitle>
-                  <CardDescription>Manage and respond to active alerts in your area</CardDescription>
+                  <CardDescription>Manage and respond to active alerts across all areas</CardDescription>
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-40">

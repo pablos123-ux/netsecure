@@ -7,28 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request, 'STAFF', { includeRelations: true }) as any;
+    const user = await requireAuth(request, 'ADMIN', { includeRelations: true }) as any;
 
-    // Build the where clause based on user permissions
+    // Admin can see all alerts - no filtering needed
     const whereClause: any = {};
-
-    if (user.role === 'ADMIN') {
-      // Admin can see all alerts
-      // No additional filtering needed
-    } else if (user.assignedProvinceId || user.assignedDistrictId) {
-      // Staff can only see alerts for routers in their assigned areas
-      whereClause.router = {
-        town: {
-          OR: [
-            ...(user.assignedProvinceId ? [{ district: { provinceId: user.assignedProvinceId } }] : []),
-            ...(user.assignedDistrictId ? [{ districtId: user.assignedDistrictId }] : [])
-          ]
-        }
-      };
-    } else {
-      // Staff with no assignments can see all alerts (fallback)
-      // This handles cases where staff might have broader access
-    }
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
@@ -73,7 +55,7 @@ export async function GET(request: NextRequest) {
       hasMore: offset + limit < total,
     });
   } catch (error: any) {
-    console.error('Error fetching staff alerts:', error);
+    console.error('Error fetching admin alerts:', error);
     return NextResponse.json(
       { error: 'Failed to fetch alerts' },
       { status: 500 }
@@ -83,7 +65,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth(request, 'STAFF', { includeRelations: true }) as any;
+    const user = await requireAuth(request, 'ADMIN', { includeRelations: true }) as any;
     const { alertId, action } = await request.json();
 
     if (!alertId || !action) {
@@ -93,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the alert to verify it exists and is accessible to the user
+    // Get the alert to verify it exists
     const alert = await prisma.alert.findUnique({
       where: { id: alertId },
       include: {
@@ -114,28 +96,6 @@ export async function POST(request: NextRequest) {
         { error: 'Alert not found' },
         { status: 404 }
       );
-    }
-
-    // Check if user is authorized to manage this alert
-    if (user.role !== 'ADMIN') {
-      if (!alert.router?.town) {
-        return NextResponse.json(
-          { error: 'You are not authorized to manage this alert' },
-          { status: 403 }
-        );
-      }
-
-      const authorized = (
-        alert.router.town.district.provinceId === user.assignedProvinceId ||
-        alert.router.town.districtId === user.assignedDistrictId
-      );
-
-      if (!authorized) {
-        return NextResponse.json(
-          { error: 'You are not authorized to manage this alert' },
-          { status: 403 }
-        );
-      }
     }
 
     // Update the alert

@@ -116,21 +116,21 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-4 sm:p-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Network Management System Overview</p>
+        <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3 sm:gap-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl xs:text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+            <p className="text-sm xs:text-base text-muted-foreground">Network Management System Overview</p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2 sm:gap-3">
             {lastRefresh && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>Updated {lastRefresh.toLocaleTimeString()}</span>
+              <div className="flex items-center gap-2 text-xs xs:text-sm text-muted-foreground">
+                <Clock className="w-3.5 h-3.5 xs:w-4 xs:h-4 flex-shrink-0" />
+                <span className="whitespace-nowrap">Updated {lastRefresh.toLocaleTimeString()}</span>
                 {isCached && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                  <span className="px-1.5 py-0.5 xs:px-2 xs:py-1 bg-yellow-100 text-yellow-800 rounded-full text-[10px] xs:text-xs">
                     Cached
                   </span>
                 )}
@@ -142,77 +142,85 @@ export default function AdminDashboard() {
               disabled={loading}
               variant="outline" 
               size="sm"
-              className="flex items-center gap-2"
+              className="w-full xs:w-auto flex items-center justify-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`w-3.5 h-3.5 xs:w-4 xs:h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Routers</CardTitle>
-              <Router className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+              <CardTitle className="text-xs xs:text-sm font-medium">Total Routers</CardTitle>
+              <Router className="h-3.5 w-3.5 xs:h-4 xs:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalRouters || 0}</div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <span className="text-green-600">{stats?.onlineRouters || 0} Online</span>
-                <span className="text-red-600">{stats?.offlineRouters || 0} Offline</span>
-              </div>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl xs:text-2xl font-bold">{stats?.totalRouters || 0}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Across all locations</p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Staff Members</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+              <CardTitle className="text-xs xs:text-sm font-medium">Active Users</CardTitle>
+              <Users className="h-3.5 w-3.5 xs:h-4 xs:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalStaff || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Active system users
-              </p>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl xs:text-2xl font-bold">{stats?.activeUsers || 0}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Currently online</p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Locations</CardTitle>
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+              <CardTitle className="text-xs xs:text-sm font-medium">Locations</CardTitle>
+              <MapPin className="h-3.5 w-3.5 xs:h-4 xs:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalTowns || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats?.totalProvinces || 0} Provinces, {stats?.totalDistricts || 0} Districts
-              </p>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl xs:text-2xl font-bold">{stats?.locations || 0}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Active locations</p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+              <CardTitle className="text-xs xs:text-sm font-medium">Alerts</CardTitle>
+              <AlertTriangle className="h-3.5 w-3.5 xs:h-4 xs:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats?.activeAlerts || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Require attention
-              </p>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl xs:text-2xl font-bold">{stats?.activeAlerts || 0}</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Active issues</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts and Activity */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 min-w-0">
-            <AdminStatsChart />
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-3 sm:gap-4">
+          <div className="lg:col-span-4">
+            <Card className="h-full">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-lg sm:text-xl">Network Status</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Current status of all network components</CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 sm:p-4 pt-0">
+                <div className="h-[300px] sm:h-[350px] md:h-[400px]">
+                  <AdminStatsChart />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="xl:col-span-1 min-w-0">
-            <RecentActivity />
+          <div className="lg:col-span-3">
+            <Card className="h-full">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-lg sm:text-xl">Recent Activity</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Latest system events and changes</CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 sm:p-4 pt-0">
+                <div className="h-[300px] sm:h-[350px] md:h-[400px] overflow-y-auto">
+                  <RecentActivity />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 

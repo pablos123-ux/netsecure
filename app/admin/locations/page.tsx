@@ -37,24 +37,29 @@ export default function LocationManagement() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [provincesRes, districtsRes, townsRes] = await Promise.all([
-        fetch('/api/admin/provinces'),
-        fetch('/api/admin/districts'),
-        fetch('/api/admin/towns')
+        fetch('/api/admin/provinces', { cache: 'no-store' }),
+        fetch('/api/admin/districts', { cache: 'no-store' }),
+        fetch('/api/admin/towns', { cache: 'no-store' })
       ]);
 
-      if (provincesRes.ok && districtsRes.ok && townsRes.ok) {
-        const [provincesData, districtsData, townsData] = await Promise.all([
-          provincesRes.json(),
-          districtsRes.json(),
-          townsRes.json()
-        ]);
-        setProvinces(provincesData.provinces);
-        setDistricts(districtsData.districts);
-        setTowns(townsData.towns);
+      if (!provincesRes.ok || !districtsRes.ok || !townsRes.ok) {
+        throw new Error('Failed to fetch one or more data sources');
       }
+
+      const [provincesData, districtsData, townsData] = await Promise.all([
+        provincesRes.json(),
+        districtsRes.json(),
+        townsRes.json()
+      ]);
+
+      setProvinces(provincesData.provinces || []);
+      setDistricts(districtsData.districts || []);
+      setTowns(townsData.towns || []);
     } catch (error) {
-      toast.error('Failed to load data');
+      console.error('Error fetching location data:', error);
+      toast.error('Failed to load location data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -63,10 +68,30 @@ export default function LocationManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Basic validation
+    if (!formData.name || !formData.code) {
+      toast.error('Name and code are required');
+      return;
+    }
+
+    // Additional validation for districts and towns
+    if (activeTab === 'districts' && !formData.provinceId) {
+      toast.error('Please select a province');
+      return;
+    }
+
+    if (activeTab === 'towns' && !formData.districtId) {
+      toast.error('Please select a district');
+      return;
+    }
+    
     try {
+      setLoading(true);
       let url = '';
       const method = editingItem ? 'PUT' : 'POST';
+      const itemType = activeTab.slice(0, -1); // Remove 's' from the end
       
+      // Set the appropriate API endpoint
       if (activeTab === 'provinces') {
         url = editingItem ? `/api/admin/provinces/${editingItem.id}` : '/api/admin/provinces';
       } else if (activeTab === 'districts') {
@@ -75,24 +100,43 @@ export default function LocationManagement() {
         url = editingItem ? `/api/admin/towns/${editingItem.id}` : '/api/admin/towns';
       }
       
+      // Prepare the request body based on the active tab
+      const requestBody = {
+        ...(activeTab === 'provinces' && { name: formData.name, code: formData.code }),
+        ...(activeTab === 'districts' && { 
+          name: formData.name, 
+          code: formData.code, 
+          provinceId: formData.provinceId 
+        }),
+        ...(activeTab === 'towns' && { 
+          name: formData.name, 
+          code: formData.code, 
+          districtId: formData.districtId 
+        })
+      };
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestBody),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        toast.success(`${activeTab.slice(0, -1)} ${editingItem ? 'updated' : 'created'} successfully`);
+        toast.success(`${itemType} ${editingItem ? 'updated' : 'created'} successfully`);
         setIsDialogOpen(false);
         setEditingItem(null);
         setFormData({ name: '', code: '', provinceId: '', districtId: '' });
-        fetchData();
+        await fetchData(); // Wait for data to be refetched
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Operation failed');
+        throw new Error(data.error || 'Operation failed');
       }
     } catch (error) {
-      toast.error('Operation failed');
+      console.error(`Error ${editingItem ? 'updating' : 'creating'} ${activeTab.slice(0, -1)}:`, error);
+      toast.error(error.message || `Failed to ${editingItem ? 'update' : 'create'} ${activeTab.slice(0, -1)}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,24 +152,38 @@ export default function LocationManagement() {
   };
 
   const handleDelete = async (id: string, type: string) => {
-    if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+    if (!confirm(`Are you sure you want to delete this ${type}? This action cannot be undone.`)) return;
 
     try {
-      const response = await fetch(`/api/admin/${type}s/${id}`, { method: 'DELETE' });
+      setLoading(true);
+      const response = await fetch(`/api/admin/${type}s/${id}`, { 
+        method: 'DELETE' 
+      });
+
       if (response.ok) {
-        toast.success(`${type} deleted successfully`);
-        fetchData();
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
+        await fetchData(); // Wait for data to be refetched
       } else {
-        toast.error(`Failed to delete ${type}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to delete ${type}`);
       }
     } catch (error) {
-      toast.error(`Failed to delete ${type}`);
+      console.error(`Error deleting ${type}:`, error);
+      toast.error(error.message || `Failed to delete ${type}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const openDialog = (type: string) => {
     setEditingItem(null);
-    setFormData({ name: '', code: '', provinceId: '', districtId: '' });
+    // Reset form data and set default values based on type
+    setFormData({
+      name: '',
+      code: '',
+      provinceId: type === 'districts' ? (formData.provinceId || '') : '',
+      districtId: type === 'towns' ? (formData.districtId || '') : ''
+    });
     setActiveTab(type);
     setIsDialogOpen(true);
   };
@@ -338,7 +396,7 @@ export default function LocationManagement() {
         </Tabs>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px] md:max-w-[500px] w-[95vw] max-w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingItem ? 'Edit' : 'Add'} {activeTab.slice(0, -1)}
@@ -347,35 +405,37 @@ export default function LocationManagement() {
                 {editingItem ? 'Update' : 'Create a new'} {activeTab.slice(0, -1)}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
+            <form onSubmit={handleSubmit} className="space-y-4 w-full">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  className="w-full text-base"
                 />
               </div>
-              <div>
-                <Label htmlFor="code">Code</Label>
+              <div className="space-y-2">
+                <Label htmlFor="code" className="text-sm font-medium">Code</Label>
                 <Input
                   id="code"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   required
+                  className="w-full text-base"
                 />
               </div>
               {activeTab === 'districts' && (
-                <div>
-                  <Label htmlFor="province">Province</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="province" className="text-sm font-medium">Province</Label>
                   <Select value={formData.provinceId} onValueChange={(value) => setFormData({ ...formData, provinceId: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full text-base">
                       <SelectValue placeholder="Select province" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[200px] overflow-y-auto">
                       {provinces.map((province) => (
-                        <SelectItem key={province.id} value={province.id}>
+                        <SelectItem key={province.id} value={province.id} className="py-2">
                           {province.name}
                         </SelectItem>
                       ))}
@@ -384,27 +444,35 @@ export default function LocationManagement() {
                 </div>
               )}
               {activeTab === 'towns' && (
-                <div>
-                  <Label htmlFor="district">District</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="district" className="text-sm font-medium">District</Label>
                   <Select value={formData.districtId} onValueChange={(value) => setFormData({ ...formData, districtId: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full text-base">
                       <SelectValue placeholder="Select district" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[200px] overflow-y-auto">
                       {districts.map((district) => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.name} ({district.province?.name})
+                        <SelectItem key={district.id} value={district.id} className="py-2">
+                          <span className="block truncate">{district.name} <span className="text-muted-foreground">({district.province?.name})</span></span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               )}
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                >
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit" 
+                  className="w-full sm:w-auto"
+                >
                   {editingItem ? 'Update' : 'Create'}
                 </Button>
               </div>

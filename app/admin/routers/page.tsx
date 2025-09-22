@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { Router, Town, District, Province } from '@/types';
 import { Plus, Edit, Trash2, Router as RouterIcon, ArrowLeft, Activity, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,13 +31,56 @@ export default function RouterManagement() {
     capacity: '',
     location: '',
     townId: '',
-    status: 'OFFLINE'
+    status: 'OFFLINE',
+    bandwidthLimit: '',
+    bandwidthLimitEnabled: false
   });
+  
+  const [connectedUsers, setConnectedUsers] = useState<{routerId: string, count: number}[]>([]);
+  const [bandwidthUsage, setBandwidthUsage] = useState<{routerId: string, usage: number}[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchConnectedUsers, 10000); // Update every 10 seconds
+    return () => clearInterval(interval);
   }, []);
+  
+  const fetchConnectedUsers = async () => {
+    try {
+      const [usersRes, usageRes] = await Promise.all([
+        fetch('/api/admin/connected-users/count-by-router'),
+        fetch('/api/admin/bandwidth-usage')
+      ]);
+      
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        setConnectedUsers(data);
+      }
+      
+      if (usageRes.ok) {
+        const data = await usageRes.json();
+        setBandwidthUsage(data);
+      }
+    } catch (error) {
+      console.error('Error fetching connected users or bandwidth data:', error);
+    }
+  };
+  
+  const getConnectedUsersCount = (routerId: string) => {
+    const router = connectedUsers.find(r => r.routerId === routerId);
+    return router ? router.count : 0;
+  };
+  
+  const getBandwidthUsage = (routerId: string) => {
+    const usage = bandwidthUsage.find(r => r.routerId === routerId);
+    return usage ? usage.usage : 0;
+  };
+  
+  const getBandwidthPercentage = (router: Router) => {
+    const usage = getBandwidthUsage(router.id);
+    return Math.min(100, Math.round((usage / (router.capacity || 1)) * 100));
+  };
 
   const fetchData = async () => {
     try {
@@ -78,7 +122,8 @@ export default function RouterManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          capacity: parseFloat(formData.capacity)
+          capacity: parseFloat(formData.capacity),
+          bandwidthLimit: formData.bandwidthLimitEnabled ? parseFloat(formData.bandwidthLimit) : undefined
         }),
       });
 
@@ -94,7 +139,9 @@ export default function RouterManagement() {
           capacity: '',
           location: '',
           townId: '',
-          status: 'OFFLINE'
+          status: 'OFFLINE',
+          bandwidthLimit: '',
+          bandwidthLimitEnabled: false
         });
         fetchData();
       } else {
@@ -116,7 +163,9 @@ export default function RouterManagement() {
       capacity: routerItem.capacity.toString(),
       location: routerItem.location || '',
       townId: routerItem.townId,
-      status: routerItem.status
+      status: routerItem.status,
+      bandwidthLimit: routerItem.bandwidthLimit?.toString() || '',
+      bandwidthLimitEnabled: !!routerItem.bandwidthLimit
     });
     setIsDialogOpen(true);
   };
@@ -171,209 +220,299 @@ export default function RouterManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="bg-background shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div>
-                <h1 className="text-2xl font-bold">Router Management</h1>
-                <p className="text-muted-foreground">Manage network routers and access points</p>
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Router Management</h1>
+          <p className="text-muted-foreground">Manage and monitor your network routers</p>
+        </div>
+        <Button onClick={() => {
+          setEditingRouter(null);
+          setFormData({
+            name: '',
+            model: '',
+            ipAddress: '',
+            macAddress: '',
+            capacity: '',
+            location: '',
+            townId: '',
+            status: 'OFFLINE',
+            bandwidthLimit: '',
+            bandwidthLimitEnabled: false
+          });
+          setIsDialogOpen(true);
+        }}>
+          <Plus className="mr-2 h-4 w-4" /> Add Router
+        </Button>
+      </div>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] w-[95vw] max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingRouter ? 'Edit Router' : 'Add New Router'}</DialogTitle>
+            <DialogDescription>
+              {editingRouter ? 'Update router details' : 'Create a new router/access point'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 w-full">
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="model" className="text-right">
+                  Model
+                </Label>
+                <Input
+                  id="model"
+                  value={formData.model}
+                  onChange={(e) => setFormData({...formData, model: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="ipAddress" className="text-right">
+                  IP Address
+                </Label>
+                <Input
+                  id="ipAddress"
+                  value={formData.ipAddress}
+                  onChange={(e) => setFormData({...formData, ipAddress: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="macAddress" className="text-right">
+                  MAC Address
+                </Label>
+                <Input
+                  id="macAddress"
+                  value={formData.macAddress}
+                  onChange={(e) => setFormData({...formData, macAddress: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="capacity" className="text-right">
+                  Total Capacity (Mbps)
+                </Label>
+                <Input
+                  id="capacity"
+                  type="number"
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="bandwidthLimitEnabled" className="text-right">
+                  Enable User Limit
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="bandwidthLimitEnabled"
+                    checked={formData.bandwidthLimitEnabled}
+                    onCheckedChange={(checked) => setFormData({...formData, bandwidthLimitEnabled: checked})}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {formData.bandwidthLimitEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+              {formData.bandwidthLimitEnabled && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="bandwidthLimit" className="text-right">
+                    Per-User Limit (Mbps)
+                  </Label>
+                  <Input
+                    id="bandwidthLimit"
+                    type="number"
+                    value={formData.bandwidthLimit}
+                    onChange={(e) => setFormData({...formData, bandwidthLimit: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter bandwidth limit per user"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="townId" className="text-right">
+                  Town
+                </Label>
+                <Select
+                  value={formData.townId}
+                  onValueChange={(value) => setFormData({...formData, townId: value})}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a town" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {towns.map((town) => (
+                      <SelectItem key={town.id} value={town.id}>
+                        {town.name}, {town.district?.name}, {town.district?.province?.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({...formData, status: value as any})}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ONLINE">Online</SelectItem>
+                    <SelectItem value="OFFLINE">Offline</SelectItem>
+                    <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => {
-                  setEditingRouter(null);
-                  setFormData({
-                    name: '',
-                    model: '',
-                    ipAddress: '',
-                    macAddress: '',
-                    capacity: '',
-                    location: '',
-                    townId: '',
-                    status: 'OFFLINE'
-                  });
-                }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Router
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>{editingRouter ? 'Edit Router' : 'Add New Router'}</DialogTitle>
-                  <DialogDescription>
-                    {editingRouter ? 'Update router details' : 'Create a new router/access point'}
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Router Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="model">Model</Label>
-                      <Input
-                        id="model"
-                        value={formData.model}
-                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="ipAddress">IP Address</Label>
-                      <Input
-                        id="ipAddress"
-                        value={formData.ipAddress}
-                        onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="macAddress">MAC Address</Label>
-                      <Input
-                        id="macAddress"
-                        value={formData.macAddress}
-                        onChange={(e) => setFormData({ ...formData, macAddress: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="capacity">Capacity (Mbps)</Label>
-                      <Input
-                        id="capacity"
-                        type="number"
-                        value={formData.capacity}
-                        onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="status">Status</Label>
-                      <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ONLINE">Online</SelectItem>
-                          <SelectItem value="OFFLINE">Offline</SelectItem>
-                          <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                          <SelectItem value="ERROR">Error</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="location">Physical Location</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="e.g., Building A, Floor 2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="town">Town</Label>
-                    <Select value={formData.townId} onValueChange={(value) => setFormData({ ...formData, townId: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select town" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {towns.map((town) => (
-                          <SelectItem key={town.id} value={town.id}>
-                            {town.name} ({town.district?.name}, {town.district?.province?.name})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingRouter ? 'Update' : 'Create'}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <RouterIcon className="w-5 h-5 mr-2" />
-              Network Routers
-            </CardTitle>
-            <CardDescription>
-              Manage all network routers and access points across Rwanda
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Uptime</TableHead>
-                  <TableHead>Bandwidth</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Town</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {routers.map((routerItem) => (
-                  <TableRow key={routerItem.id}>
-                    <TableCell className="font-medium">{routerItem.name}</TableCell>
-                    <TableCell>{routerItem.model}</TableCell>
-                    <TableCell className="font-mono text-sm">{routerItem.ipAddress}</TableCell>
-                    <TableCell>{getStatusBadge(routerItem.status)}</TableCell>
-                    <TableCell>{formatUptime(routerItem.uptime)}</TableCell>
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsDialogOpen(false)}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="w-full sm:w-auto"
+              >
+                {editingRouter ? 'Update' : 'Create'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <RouterIcon className="w-5 h-5 mr-2" />
+            Network Routers
+          </CardTitle>
+          <CardDescription>
+            Manage all network routers and access points across Rwanda
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>IP Address</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Connected Users</TableHead>
+                <TableHead>Bandwidth Usage</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {routers.map((router) => {
+                const usagePercentage = getBandwidthPercentage(router);
+                const usageColor = 
+                  usagePercentage > 90 ? 'bg-red-500' : 
+                  usagePercentage > 70 ? 'bg-yellow-500' : 'bg-green-500';
+                  
+                return (
+                  <TableRow key={router.id}>
+                    <TableCell className="font-medium">{router.name}</TableCell>
+                    <TableCell>{router.model}</TableCell>
+                    <TableCell>{router.ipAddress}</TableCell>
                     <TableCell>
-                      {routerItem.bandwidth.toFixed(1)} / {routerItem.capacity} Mbps
+                      <Badge variant={router.status === 'ONLINE' ? 'default' : 'secondary'}>
+                        {router.status}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{routerItem.location || '-'}</TableCell>
-                    <TableCell>{routerItem.town?.name}</TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(routerItem)}>
-                          <Edit className="w-4 h-4" />
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                        {getConnectedUsersCount(router.id)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className={`h-2.5 rounded-full ${usageColor}`} 
+                          style={{ width: `${usagePercentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {getBandwidthUsage(router.id).toFixed(2)} / {router.capacity} Mbps
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {router.town?.district?.province?.name}, {router.town?.name}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingRouter(router);
+                            setFormData({
+                              name: router.name,
+                              model: router.model,
+                              ipAddress: router.ipAddress,
+                              macAddress: router.macAddress || '',
+                              capacity: router.capacity.toString(),
+                              location: router.location || '',
+                              townId: router.townId,
+                              status: router.status,
+                              bandwidthLimit: router.bandwidthLimit?.toString() || '',
+                              bandwidthLimitEnabled: !!router.bandwidthLimit
+                            });
+                            setIsDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Activity className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Users className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(routerItem.id)}>
-                          <Trash2 className="w-4 h-4" />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(router.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </main>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
