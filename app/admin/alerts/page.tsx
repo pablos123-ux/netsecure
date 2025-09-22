@@ -8,32 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Alert as AlertType } from '@/types';
+import { Alert as AlertType, Router as RouterType, Town } from '@/types';
 import { AlertTriangle, CheckCircle2, XCircle, Clock, Router, MapPin, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExtendedAlert extends AlertType {
-  router?: {
-    id: string;
-    name: string;
-    model: string;
-    ipAddress: string;
-    status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE' | 'ERROR';
-    uptime: number;
-    bandwidth: number;
-    capacity: number;
-    townId: string;
-    macAddress?: string;
-    location?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    lastSeen?: Date;
-    town?: {
-      id: string;
-      name: string;
+  router?: RouterType & {
+    town?: Town & {
       district?: {
         id: string;
         name: string;
+        code: string;
+        provinceId: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
       };
     };
   };

@@ -134,7 +134,8 @@ export default function LocationManagement() {
       }
     } catch (error) {
       console.error(`Error ${editingItem ? 'updating' : 'creating'} ${activeTab.slice(0, -1)}:`, error);
-      toast.error(error.message || `Failed to ${editingItem ? 'update' : 'create'} ${activeTab.slice(0, -1)}`);
+      const errorMessage = error instanceof Error ? error.message : `Failed to ${editingItem ? 'update' : 'create'} ${activeTab.slice(0, -1)}`;
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -169,7 +170,8 @@ export default function LocationManagement() {
       }
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
-      toast.error(error.message || `Failed to delete ${type}`);
+      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${type}`;
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
