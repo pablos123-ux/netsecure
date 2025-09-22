@@ -55,6 +55,21 @@ export function StaffRouterTable() {
     return `${minutes}m`;
   };
 
+  const handleEdit = async (router: Router) => {
+    // TODO: Implement edit functionality for staff
+    toast.info('Edit functionality coming soon');
+  };
+
+  const handleViewActivity = async (router: Router) => {
+    // TODO: Implement view activity functionality
+    toast.info('View activity functionality coming soon');
+  };
+
+  const handleDelete = async (router: Router) => {
+    // TODO: Implement delete functionality for staff (may need admin approval)
+    toast.info('Delete functionality requires admin approval');
+  };
+
   if (loading) {
     return (
       <Card>
@@ -106,13 +121,13 @@ export function StaffRouterTable() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(router)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewActivity(router)}>
                         <Activity className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600">
+                      <Button variant="outline" size="sm" className="text-red-600" onClick={() => handleDelete(router)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
