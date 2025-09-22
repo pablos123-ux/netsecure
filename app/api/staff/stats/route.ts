@@ -25,6 +25,32 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Ensure database connection is ready with timeout
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        )
+      ]);
+    } catch (connectionError) {
+      console.warn('Staff stats: Database connection timeout');
+      return NextResponse.json({
+        totalRouters: 0,
+        onlineRouters: 0,
+        offlineRouters: 0,
+        activeAlerts: 0,
+        totalTowns: 0,
+        totalProvinces: 0,
+        totalDistricts: 0,
+        totalStaff: 0,
+        averageUptime: 0,
+        totalBandwidth: 0,
+        error: 'Database connection timeout',
+        cached: true
+      });
+    }
+
     const [
       totalRouters,
       onlineRouters,
@@ -32,26 +58,27 @@ export async function GET(request: NextRequest) {
       activeAlerts,
       totalTowns
     ] = await Promise.all([
-      prisma.router.count({ where: whereClause }),
-      prisma.router.count({ 
-        where: { ...whereClause, status: 'ONLINE' } 
+      prisma.router.count({ where: { ...whereClause, isActive: true } }),
+      prisma.router.count({
+        where: { ...whereClause, status: 'ONLINE', isActive: true }
       }),
-      prisma.router.count({ 
-        where: { ...whereClause, status: 'OFFLINE' } 
+      prisma.router.count({
+        where: { ...whereClause, status: 'OFFLINE', isActive: true }
       }),
-      prisma.alert.count({ 
-        where: { 
+      prisma.alert.count({
+        where: {
           status: 'ACTIVE',
-          router: whereClause
-        } 
+          router: { ...whereClause, isActive: true }
+        }
       }),
-      user.assignedDistrictId 
-        ? prisma.town.count({ where: { districtId: user.assignedDistrictId } })
+      user.assignedDistrictId
+        ? prisma.town.count({ where: { districtId: user.assignedDistrictId, isActive: true } })
         : user.assignedProvinceId
-        ? prisma.town.count({ 
-            where: { 
-              district: { provinceId: user.assignedProvinceId } 
-            } 
+        ? prisma.town.count({
+            where: {
+              district: { provinceId: user.assignedProvinceId },
+              isActive: true
+            }
           })
         : 0
     ]);

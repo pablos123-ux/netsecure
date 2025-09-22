@@ -24,6 +24,31 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Ensure database connection is ready with timeout
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        )
+      ]);
+    } catch (connectionError) {
+      console.warn('Chart data: Database connection timeout');
+      // Return cached data if available
+      if (chartCache) {
+        return NextResponse.json({
+          ...chartCache,
+          cached: true,
+          warning: 'Database connection slow, showing cached data'
+        });
+      }
+
+      return NextResponse.json(
+        { error: 'Database connection timeout' },
+        { status: 503 }
+      );
+    }
+
     // Optimized queries - get data more efficiently
     const [provinces, routerStats] = await Promise.all([
       // Get provinces with router counts

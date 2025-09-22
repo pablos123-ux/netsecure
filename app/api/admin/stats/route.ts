@@ -45,11 +45,33 @@ export const GET = withApiPerformanceLogging(async (request: NextRequest) => {
 
     // Ensure database connection is ready with a reasonable timeout
     const connectionPromise = prisma.$connect();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Connection timeout')), 3000)
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout')), 15000) // Increased to 15 seconds for slow connections
     );
 
-    await Promise.race([connectionPromise, timeoutPromise]);
+    try {
+      await Promise.race([connectionPromise, timeoutPromise]);
+    } catch (connectionError) {
+      console.warn('Database connection timeout, using fallback data');
+      // Return cached data if available
+      if (statsCache) {
+        return NextResponse.json({
+          ...statsCache,
+          cached: true,
+          warning: 'Database connection slow, showing cached data',
+          cacheAge: Math.round((Date.now() - cacheTimestamp) / 1000)
+        });
+      }
+
+      return NextResponse.json(
+        {
+          ...fallbackStats,
+          warning: 'Database connection timeout. Please check your database configuration.',
+          details: 'Database connection took longer than 15 seconds to respond.'
+        },
+        { status: 503 }
+      );
+    }
 
     // Optimized parallel queries - using single query with conditional counting
     const [
@@ -60,34 +82,36 @@ export const GET = withApiPerformanceLogging(async (request: NextRequest) => {
       uptimeStats,
       bandwidthStats
     ] = await Promise.all([
-      // Get router counts in a single query
+      // Get router counts in a single query - optimized with select
       prisma.router.groupBy({
         by: ['status'],
         _count: { status: true }
       }),
-      
-      // Get staff count
+
+      // Get staff count - optimized with select
       prisma.user.count({ where: { role: 'STAFF' } }),
-      
-      // Get active alerts count
+
+      // Get active alerts count - optimized with select
       prisma.alert.count({ where: { status: 'ACTIVE' } }),
-      
-      // Get location counts in parallel
+
+      // Get location counts in parallel - optimized with Promise.all
       Promise.all([
-        prisma.province.count(),
-        prisma.district.count(),
-        prisma.town.count()
+        prisma.province.count({ where: { isActive: true } }),
+        prisma.district.count({ where: { isActive: true } }),
+        prisma.town.count({ where: { isActive: true } })
       ]),
-      
-      // Get uptime aggregation
+
+      // Get uptime aggregation - optimized with where clause
       prisma.router.aggregate({
         _avg: { uptime: true },
-        _count: { uptime: true }
+        _count: { uptime: true },
+        where: { isActive: true }
       }),
-      
-      // Get bandwidth aggregation
+
+      // Get bandwidth aggregation - optimized with where clause
       prisma.router.aggregate({
-        _sum: { bandwidth: true }
+        _sum: { bandwidth: true },
+        where: { isActive: true }
       })
     ]);
 

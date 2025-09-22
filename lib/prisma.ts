@@ -28,7 +28,7 @@ const getDatabaseUrl = () => {
 
 // Use global instance in development to prevent connection issues during hot reload
 const prisma = globalThis.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   datasources: {
     db: {
       url: getDatabaseUrl(),

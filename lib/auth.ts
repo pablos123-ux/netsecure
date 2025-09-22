@@ -45,8 +45,9 @@ type AuthOptions = { includeRelations?: boolean };
 
 export async function getCurrentUser(request: NextRequest, options?: AuthOptions) {
   try {
+    // Use cookies directly to avoid request body disturbance issues
     const token = request.cookies.get('auth-token')?.value;
-    
+
     if (!token) {
       return null;
     }
