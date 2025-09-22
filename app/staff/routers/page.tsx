@@ -58,13 +58,66 @@ export default function StaffRoutersPage() {
   const [relocatingRouter, setRelocatingRouter] = useState<ExtendedRouter | null>(null);
   const [relocationTown, setRelocationTown] = useState<string>('');
 
+  const handleUnassignRouter = async (routerId: string) => {
+    try {
+      const response = await fetch(`/api/staff/routers/${routerId}/unassign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        toast.success('Router unassigned successfully');
+        await fetchData(); // Refresh all data
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to unassign router');
+      }
+    } catch (error) {
+      console.error('Error unassigning router:', error);
+      toast.error('Failed to unassign router');
+    }
+  };
+
+  const handleRelocateRouter = async () => {
+    if (!relocatingRouter || !relocationTown) {
+      toast.error('Please select a destination town');
+      return;
+    }
+
+    if (relocatingRouter.townId === relocationTown) {
+      toast.error('Router is already assigned to this town');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/staff/routers/${relocatingRouter.id}/relocate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ townId: relocationTown })
+      });
+
+      if (response.ok) {
+        toast.success('Router relocated successfully');
+        setRelocatingRouter(null);
+        setRelocationTown('');
+        await fetchData(); // Refresh all data
+      } else {
+        const error = await response.json();
+        toast.error(error.error || 'Failed to relocate router');
+      }
+    } catch (error) {
+      console.error('Error relocating router:', error);
+      toast.error('Failed to relocate router');
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       console.log('Starting data fetch...');
 
       await Promise.all([
@@ -78,7 +131,7 @@ export default function StaffRoutersPage() {
       console.error('Error fetching data:', error);
       toast.error('Failed to load router data');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -101,7 +154,7 @@ export default function StaffRoutersPage() {
 
   const fetchAssignedRouters = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const response = await fetch('/api/staff/routers');
       if (response.ok) {
         const data = await response.json();
@@ -115,7 +168,7 @@ export default function StaffRoutersPage() {
       setAssignedRouters([]);
       toast.error('Network error - please check your connection');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -172,38 +225,6 @@ export default function StaffRoutersPage() {
     }
   };
 
-  const handleRelocateRouter = async () => {
-    if (!relocatingRouter || !relocationTown) {
-      toast.error('Please select a destination town');
-      return;
-    }
-
-    if (relocatingRouter.townId === relocationTown) {
-      toast.error('Router is already assigned to this town');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/staff/routers/${relocatingRouter.id}/relocate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ townId: relocationTown })
-      });
-
-      if (response.ok) {
-        toast.success('Router relocated successfully');
-        setRelocatingRouter(null);
-        setRelocationTown('');
-        await fetchData(); // Refresh all data
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to relocate router');
-      }
-    } catch (error) {
-      console.error('Error relocating router:', error);
-      toast.error('Failed to relocate router');
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -228,7 +249,7 @@ export default function StaffRoutersPage() {
     return `${minutes}m`;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Router Management</h1>
@@ -312,7 +333,7 @@ export default function StaffRoutersPage() {
               <CardDescription>Routers currently deployed in your assigned area. Use the buttons below to manage them.</CardDescription>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
