@@ -51,7 +51,7 @@ export default function StaffRoutersPage() {
   const [assignedRouters, setAssignedRouters] = useState<ExtendedRouter[]>([]);
   const [towns, setTowns] = useState<ExtendedTown[]>([]);
   const [townsLoading, setTownsLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [selectedRouter, setSelectedRouter] = useState<string>('');
   const [selectedTown, setSelectedTown] = useState<string>('');

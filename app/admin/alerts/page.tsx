@@ -16,10 +16,23 @@ interface ExtendedAlert extends AlertType {
   router?: {
     id: string;
     name: string;
+    model: string;
     ipAddress: string;
+    status: 'ONLINE' | 'OFFLINE' | 'MAINTENANCE' | 'ERROR';
+    uptime: number;
+    bandwidth: number;
+    capacity: number;
+    townId: string;
+    macAddress?: string;
+    location?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    lastSeen?: Date;
     town?: {
+      id: string;
       name: string;
       district?: {
+        id: string;
         name: string;
       };
     };
