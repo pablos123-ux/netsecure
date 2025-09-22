@@ -127,7 +127,6 @@ export function AdminStatsChart() {
                       <Bar
                         dataKey="online"
                         fill="#10B981"
-                        province="Online"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                         label={({ x, y, width, payload, value }: {
@@ -159,14 +158,12 @@ export function AdminStatsChart() {
                       <Bar
                         dataKey="offline"
                         fill="#EF4444"
-                        province="Offline"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                       />
                       <Bar
                         dataKey="maintenance"
                         fill="#F59E0B"
-                        province="Maintenance"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                       />
