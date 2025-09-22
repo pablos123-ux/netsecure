@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     await requireAuth(request);
-    
+
     const { searchParams } = new URL(request.url);
     const provinceId = searchParams.get('provinceId');
 
@@ -25,9 +25,19 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' }
     });
 
+    console.log(`Successfully fetched ${districts.length} districts`);
     return NextResponse.json({ districts });
   } catch (error) {
     console.error('Error fetching districts:', error);
+
+    // Check if it's an authentication error
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch districts' },
       { status: 500 }

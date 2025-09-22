@@ -8,7 +8,7 @@ const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#3B82F6'];
 
 export function AdminStatsChart() {
   interface ProvinceStats {
-    province: string;
+    name: string;
     online?: number;
     offline?: number;
     maintenance?: number;
@@ -111,23 +111,23 @@ export function AdminStatsChart() {
                           padding: '2px 0',
                           textTransform: 'capitalize'
                         }}
-                        formatter={(value, name, props) => {
+                        formatter={(value, province, props) => {
                           const total = props.payload.total || 0;
-                          if (name === 'Online') {
+                          if (province === 'Online') {
                             return [
-                              `${value} ${name} (${total} total)`,
-                              name,
+                              `${value} ${province} (${total} total)`,
+                              province,
                               props.fill
                             ];
                           }
-                          return [value, name, props.fill];
+                          return [value, province, props.fill];
                         }}
                         labelFormatter={(label) => `${label}`}
                       />
                       <Bar
                         dataKey="online"
                         fill="#10B981"
-                        name="Online"
+                        province="Online"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                         label={({ x, y, width, payload, value }: {
@@ -159,14 +159,14 @@ export function AdminStatsChart() {
                       <Bar
                         dataKey="offline"
                         fill="#EF4444"
-                        name="Offline"
+                        province="Offline"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                       />
                       <Bar
                         dataKey="maintenance"
                         fill="#F59E0B"
-                        name="Maintenance"
+                        province="Maintenance"
                         radius={[2, 2, 0, 0]}
                         maxBarSize={isMobile ? 24 : 32}
                       />
@@ -206,7 +206,7 @@ export function AdminStatsChart() {
                     outerRadius={isMobile ? 72 : 84}
                     fill="#8884d8"
                     dataKey="value"
-                    label={isMobile ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={isMobile ? false : ({ province, percent }) => `${province} ${(percent * 100).toFixed(0)}%`}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

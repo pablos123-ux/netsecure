@@ -18,9 +18,19 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' }
     });
 
+    console.log(`Successfully fetched ${provinces.length} provinces`);
     return NextResponse.json({ provinces });
   } catch (error) {
     console.error('Error fetching provinces:', error);
+
+    // Check if it's an authentication error
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch provinces' },
       { status: 500 }

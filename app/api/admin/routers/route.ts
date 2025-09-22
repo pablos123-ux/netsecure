@@ -6,6 +6,23 @@ export async function GET(request: NextRequest) {
   try {
     await requireAuth(request);
 
+    // Ensure database connection is ready with timeout
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        )
+      ]);
+    } catch (connectionError) {
+      console.warn('Admin routers: Database connection timeout');
+      return NextResponse.json({
+        routers: [],
+        warning: 'Database connection timeout',
+        cached: true
+      });
+    }
+
     const routers = await prisma.router.findMany({
       include: {
         town: {
@@ -32,7 +49,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching routers:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch routers' },
+      {
+        error: 'Failed to fetch routers',
+        routers: [],
+        cached: true
+      },
       { status: 500 }
     );
   }

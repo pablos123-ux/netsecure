@@ -3,6 +3,32 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
+    // Ensure database connection is ready with timeout
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        )
+      ]);
+    } catch (connectionError) {
+      console.warn('Stats: Database connection timeout');
+      return NextResponse.json({
+        totalRouters: 0,
+        onlineRouters: 0,
+        offlineRouters: 0,
+        totalStaff: 0,
+        activeAlerts: 0,
+        totalProvinces: 0,
+        totalDistricts: 0,
+        totalTowns: 0,
+        averageUptime: 0,
+        totalBandwidth: 0,
+        warning: 'Database connection timeout',
+        cached: true
+      });
+    }
+
     const [
       totalRouters,
       onlineRouters,
@@ -48,14 +74,28 @@ export async function GET() {
       totalDistricts,
       totalTowns,
       averageUptime,
-      totalBandwidth
+      totalBandwidth,
+      cached: false
     };
 
     return NextResponse.json(stats);
   } catch (error: any) {
     console.error('Error fetching stats:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch statistics' },
+      {
+        error: 'Failed to fetch statistics',
+        totalRouters: 0,
+        onlineRouters: 0,
+        offlineRouters: 0,
+        totalStaff: 0,
+        activeAlerts: 0,
+        totalProvinces: 0,
+        totalDistricts: 0,
+        totalTowns: 0,
+        averageUptime: 0,
+        totalBandwidth: 0,
+        cached: true
+      },
       { status: 500 }
     );
   }

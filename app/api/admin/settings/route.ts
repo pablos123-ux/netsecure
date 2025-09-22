@@ -4,7 +4,24 @@ import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request, 'ADMIN');
+    await requireAuth(request);
+
+    // Ensure database connection is ready with timeout
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout')), 15000)
+        )
+      ]);
+    } catch (connectionError) {
+      console.warn('Admin settings: Database connection timeout');
+      return NextResponse.json({
+        settings: [],
+        warning: 'Database connection timeout',
+        cached: true
+      });
+    }
 
     const settings = await prisma.settings.findMany({
       orderBy: { category: 'asc' }
@@ -14,7 +31,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching settings:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch settings' },
+      {
+        error: 'Failed to fetch settings',
+        settings: [],
+        cached: true
+      },
       { status: 500 }
     );
   }

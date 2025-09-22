@@ -45,7 +45,13 @@ export default function LocationManagement() {
       ]);
 
       if (!provincesRes.ok || !districtsRes.ok || !townsRes.ok) {
-        throw new Error('Failed to fetch one or more data sources');
+        const errorDetails = {
+          provinces: { status: provincesRes.status, statusText: provincesRes.statusText },
+          districts: { status: districtsRes.status, statusText: districtsRes.statusText },
+          towns: { status: townsRes.status, statusText: townsRes.statusText }
+        };
+        console.error('API Response errors:', errorDetails);
+        throw new Error(`Failed to fetch data: ${JSON.stringify(errorDetails)}`);
       }
 
       const [provincesData, districtsData, townsData] = await Promise.all([
@@ -53,6 +59,8 @@ export default function LocationManagement() {
         districtsRes.json(),
         townsRes.json()
       ]);
+
+      console.log('Fetched data:', { provincesData, districtsData, townsData });
 
       setProvinces(provincesData.provinces || []);
       setDistricts(districtsData.districts || []);
@@ -206,6 +214,30 @@ export default function LocationManagement() {
             <h1 className="text-xl sm:text-2xl font-bold">Location Management</h1>
             <p className="text-muted-foreground">Manage provinces, districts, and towns</p>
           </div>
+
+          {/* Sample data creation */}
+          {(provinces.length === 0 && districts.length === 0 && towns.length === 0) && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-blue-900">No location data found</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Create sample data with Rwanda's provinces, districts, and towns to get started.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={createSampleData}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    disabled={loading}
+                  >
+                    Create Sample Data
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Map search and embed */}
           <div className="grid gap-3">
             <div className="flex items-center gap-2">
