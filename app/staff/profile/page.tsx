@@ -15,6 +15,7 @@ interface UserProfile {
   email: string;
   role: 'ADMIN' | 'STAFF';
   image?: string;
+  lastLogin?: Date | null;
   assignedProvince?: { name: string };
   assignedDistrict?: { name: string };
 }
@@ -298,6 +299,19 @@ export default function StaffProfilePage() {
               <div>
                 <Label className="text-sm font-medium">Role</Label>
                 <p className="text-sm text-gray-600">{user?.role}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Last Login</Label>
+                <p className="text-sm text-gray-600">
+                  {user?.lastLogin ? (
+                    <span>
+                      {new Date(user.lastLogin).toLocaleDateString()} at{' '}
+                      {new Date(user.lastLogin).toLocaleTimeString()}
+                    </span>
+                  ) : (
+                    'Never logged in'
+                  )}
+                </p>
               </div>
               {user?.assignedProvince && (
                 <div>

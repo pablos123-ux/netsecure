@@ -48,6 +48,12 @@ export async function POST(request: NextRequest) {
     // Generate JWT token
     const token = generateToken(user.id, user.role);
 
+    // Update last login time
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
     // Create response with user data (excluding password)
     const { password: _, ...userWithoutPassword } = user;
     

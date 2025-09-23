@@ -232,6 +232,11 @@ function Topbar({ user: initialUser }: { user: { id: string; name: string; email
                   <AvatarFallback>{initialUser.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="ml-2 inline max-w-[8rem] sm:max-w-none truncate text-sm">{initialUser.name}</span>
+                {initialUser.lastLogin && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    (Last: {new Date(initialUser.lastLogin).toLocaleDateString()})
+                  </span>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

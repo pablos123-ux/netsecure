@@ -9,13 +9,16 @@ export async function GET(request: NextRequest) {
   try {
     await requireAuth(request, 'ADMIN');
 
-    // Fetch all users with their assigned locations
-    const users = await prisma.user.findMany({
+    // Fetch system users with last login information
+    const systemUsers = await prisma.user.findMany({
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        lastLogin: true,
+        isActive: true,
+        createdAt: true,
         assignedProvince: {
           select: {
             id: true,
@@ -29,26 +32,27 @@ export async function GET(request: NextRequest) {
           }
         },
         logs: {
-          take: 1,
+          take: 5,
           orderBy: {
             timestamp: 'desc'
           },
           select: {
             action: true,
-            timestamp: true
+            timestamp: true,
+            details: true
           }
         }
       },
-      orderBy: { 
-        name: 'asc' 
+      orderBy: {
+        lastLogin: 'desc'
       }
     });
 
-    return NextResponse.json({ users });
+    return NextResponse.json({ users: systemUsers });
   } catch (error) {
-    console.error('Error fetching connected users:', error);
+    console.error('Error fetching system users:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch connected users' },
+      { error: 'Failed to fetch system users' },
       { status: 500 }
     );
   }

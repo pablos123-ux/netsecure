@@ -9,33 +9,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ConnectedUser } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConnectedUser, User } from '@/types';
 import { Users, Shield, ShieldOff, ArrowLeft, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 export default function UserAccessManagement() {
   const [connectedUsers, setConnectedUsers] = useState<ConnectedUser[]>([]);
+  const [systemUsers, setSystemUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const router = useRouter();
 
   useEffect(() => {
-    fetchConnectedUsers();
-    const interval = setInterval(fetchConnectedUsers, 30000); // Refresh every 30 seconds
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
-  const fetchConnectedUsers = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch('/api/admin/connected-users');
-      if (response.ok) {
-        const data = await response.json();
-        setConnectedUsers(data.users);
+      const [connectedRes, systemRes] = await Promise.all([
+        fetch('/api/admin/connected-users'),
+        fetch('/api/admin/staff')
+      ]);
+
+      if (connectedRes.ok && systemRes.ok) {
+        const [connectedData, systemData] = await Promise.all([
+          connectedRes.json(),
+          systemRes.json()
+        ]);
+        setConnectedUsers(connectedData.users);
+        setSystemUsers(systemData.staff);
       }
     } catch (error) {
-      console.error('Error fetching connected users:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -56,7 +66,7 @@ export default function UserAccessManagement() {
 
       if (response.ok) {
         toast.success(data.message || `User ${isBlocked ? 'unblocked' : 'blocked'} successfully`);
-        await fetchConnectedUsers();
+        await fetchData();
       } else {
         throw new Error(data.error || `Failed to ${isBlocked ? 'unblock' : 'block'} user`);
       }
@@ -65,7 +75,7 @@ export default function UserAccessManagement() {
       const errorMessage = error instanceof Error ? error.message : 'Operation failed. Please try again.';
       toast.error(errorMessage);
       // Re-fetch to ensure UI is in sync with server state
-      await fetchConnectedUsers();
+      await fetchData();
     } finally {
       setBlockingUsers(prev => ({ ...prev, [userId]: false }));
     }
@@ -102,6 +112,20 @@ export default function UserAccessManagement() {
                          (filterStatus === 'active' && user.status === 'ACTIVE' && !user.isBlocked) ||
                          (filterStatus === 'blocked' && user.isBlocked) ||
                          (filterStatus === 'inactive' && user.status === 'INACTIVE');
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  const filteredSystemUsers = systemUsers.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.role.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterStatus === 'all' ||
+                         (filterStatus === 'active' && user.isActive) ||
+                         (filterStatus === 'inactive' && !user.isActive) ||
+                         (filterStatus === 'admin' && user.role === 'ADMIN') ||
+                         (filterStatus === 'staff' && user.role === 'STAFF');
     
     return matchesSearch && matchesFilter;
   });
@@ -144,6 +168,8 @@ export default function UserAccessManagement() {
                 <option value="active">Active</option>
                 <option value="blocked">Blocked</option>
                 <option value="inactive">Inactive</option>
+                <option value="admin">Admins</option>
+                <option value="staff">Staff</option>
               </select>
             </div>
           </div>
@@ -244,7 +270,16 @@ export default function UserAccessManagement() {
                     <TableCell>{formatBytes(user.totalUsage * 1024 * 1024)}</TableCell>
                     <TableCell>{user.router?.name}</TableCell>
                     <TableCell>
-                      {new Date(user.lastSeen).toLocaleString()}
+                      {user.lastSeen ? (
+                        <div className="text-sm">
+                          <div>{new Date(user.lastSeen).toLocaleDateString()}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {new Date(user.lastSeen).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Never seen</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -273,6 +308,71 @@ export default function UserAccessManagement() {
             {filteredUsers.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No users found matching your criteria
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* System Users Table */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              System Users (Staff/Admin)
+            </CardTitle>
+            <CardDescription>
+              System users with their last login information
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Province</TableHead>
+                  <TableHead>District</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Login</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSystemUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.assignedProvince?.name || '-'}</TableCell>
+                    <TableCell>{user.assignedDistrict?.name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.lastLogin ? (
+                        <div className="text-sm">
+                          <div>{new Date(user.lastLogin).toLocaleDateString()}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {new Date(user.lastLogin).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Never</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {filteredSystemUsers.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No system users found matching your criteria
               </div>
             )}
           </CardContent>

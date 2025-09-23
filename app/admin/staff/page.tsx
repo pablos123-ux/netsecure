@@ -297,7 +297,16 @@ export default function StaffManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {member.lastLogin ? new Date(member.lastLogin).toLocaleDateString() : 'Never'}
+                      {member.lastLogin ? (
+                        <div className="text-sm">
+                          <div>{new Date(member.lastLogin).toLocaleDateString()}</div>
+                          <div className="text-muted-foreground text-xs">
+                            {new Date(member.lastLogin).toLocaleTimeString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Never</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-4">
