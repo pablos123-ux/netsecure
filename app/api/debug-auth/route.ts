@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       authenticated: false,
       message: 'Error during authentication check',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 }
