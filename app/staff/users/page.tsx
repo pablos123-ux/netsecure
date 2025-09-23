@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from '@/types';
@@ -96,9 +95,14 @@ export default function StaffUsersPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">User Access</h1>
-        <div className="flex items-center justify-center h-64">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">User Access</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Loading user data...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-32 sm:h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
@@ -106,24 +110,34 @@ export default function StaffUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Access</h1>
-          <p className="text-muted-foreground">View and manage user access permissions relevant to your role</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">User Access</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">View and manage user access permissions relevant to your role</p>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">All Users</TabsTrigger>
-          <TabsTrigger value="connected">Connected Users</TabsTrigger>
-          <TabsTrigger value="activity">User Activity</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex h-auto p-1 min-w-full sm:min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              All Users
+            </TabsTrigger>
+            <TabsTrigger value="connected" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Connected
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Activity
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -185,65 +199,59 @@ export default function StaffUsersPage() {
                   No users found in your area
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Area</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Connections</TableHead>
-                      <TableHead>Last Login</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.image || undefined} />
-                              <AvatarFallback>{getUserInitials(user.name || 'Unknown')}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{user.name || 'Unknown User'}</div>
-                              <div className="text-sm text-muted-foreground">{user.email || 'No email'}</div>
+                <div className="space-y-4">
+                  {users.map((user) => (
+                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={user.image || undefined} />
+                            <AvatarFallback>{getUserInitials(user.name || 'Unknown')}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium text-base sm:text-lg truncate">{user.name || 'Unknown User'}</h3>
+                            <p className="text-sm text-muted-foreground truncate">{user.email || 'No email'}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {getRoleBadge(user.role)}
+                              <Badge variant={user.isActive ? 'default' : 'secondary'} className="text-xs">
+                                {user.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Area Assignment</p>
+                          <p className="text-sm font-medium">
                             {user.assignedDistrict?.name && user.assignedProvince?.name ? (
                               <div>
                                 <div>{user.assignedDistrict.name}</div>
-                                <div className="text-muted-foreground">{user.assignedProvince.name}</div>
+                                <div className="text-muted-foreground text-xs">{user.assignedProvince.name}</div>
                               </div>
                             ) : (
                               <span className="text-muted-foreground">No assignment</span>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.isActive ? 'default' : 'secondary'}>
-                            {user.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Connections</p>
                           <div className="text-sm">
                             <div className="font-medium">{user._count?.connectedUsers || 0}</div>
-                            <div className="text-muted-foreground">connections</div>
+                            <div className="text-muted-foreground text-xs">active connections</div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Last Login</p>
+                          <p className="text-sm text-muted-foreground">
                             {formatLastLogin(user.lastLogin)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -265,22 +273,27 @@ export default function StaffUsersPage() {
                   {users
                     .filter(u => (u._count?.connectedUsers || 0) > 0)
                     .map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
+                    <div key={user.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={user.image || undefined} />
                           <AvatarFallback>{getUserInitials(user.name || 'Unknown')}</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h3 className="font-medium">{user.name || 'Unknown User'}</h3>
-                          <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium truncate">{user.name || 'Unknown User'}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{user.email || 'No email'}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {user._count?.connectedUsers || 0}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                        <div className="text-center sm:text-right">
+                          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
+                            {user._count?.connectedUsers || 0}
+                          </div>
+                          <p className="text-sm text-muted-foreground">active connections</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">active connections</p>
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          {user.role === 'ADMIN' ? 'Admin' : 'Staff'}
+                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -307,22 +320,27 @@ export default function StaffUsersPage() {
                     .filter(u => (u._count?.logs || 0) > 0)
                     .sort((a, b) => (b._count?.logs || 0) - (a._count?.logs || 0))
                     .map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
+                    <div key={user.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={user.image || undefined} />
                           <AvatarFallback>{getUserInitials(user.name || 'Unknown')}</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h3 className="font-medium">{user.name || 'Unknown User'}</h3>
-                          <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium truncate">{user.name || 'Unknown User'}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{user.email || 'No email'}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                          {user._count?.logs || 0}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                        <div className="text-center sm:text-right">
+                          <div className="text-2xl sm:text-3xl font-bold text-green-600">
+                            {user._count?.logs || 0}
+                          </div>
+                          <p className="text-sm text-muted-foreground">activities</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">activities</p>
+                        <Badge className="bg-blue-100 text-blue-800 text-xs">
+                          {user.role === 'ADMIN' ? 'Admin' : 'Staff'}
+                        </Badge>
                       </div>
                     </div>
                   ))}
