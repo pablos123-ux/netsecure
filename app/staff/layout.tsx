@@ -17,6 +17,8 @@ interface User {
   name: string;
   email: string;
   role: 'ADMIN' | 'STAFF';
+  image?: string;
+  lastLogin?: Date | null;
 }
 
 export default function StaffLayout({
@@ -115,7 +117,7 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
   );
 }
 
-function Topbar({ user: initialUser }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } }) {
+function Topbar({ user: initialUser }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string; lastLogin?: Date | null } }) {
   const { toggleMobileSidebar } = useSidebar();
   const router = useRouter();
   const [activities, setActivities] = useState<any[]>([]);
