@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -253,9 +252,14 @@ export default function StaffRoutersPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Router Management</h1>
-        <div className="flex items-center justify-center h-64">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Router Management</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Loading router data...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-32 sm:h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
@@ -263,24 +267,34 @@ export default function StaffRoutersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Router Management</h1>
-          <p className="text-muted-foreground">Distribute and manage routers in your assigned area</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Router Management</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Distribute and manage routers in your assigned area</p>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="assigned">Assigned Routers</TabsTrigger>
-          <TabsTrigger value="available">Available Routers</TabsTrigger>
-          <TabsTrigger value="distribution">Distribution</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex h-auto p-1 min-w-full sm:min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="assigned" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Assigned
+            </TabsTrigger>
+            <TabsTrigger value="available" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Available
+            </TabsTrigger>
+            <TabsTrigger value="distribution" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 whitespace-nowrap">
+              Distribution
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Routers</CardTitle>
@@ -347,114 +361,112 @@ export default function StaffRoutersPage() {
                   </p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Model</TableHead>
-                      <TableHead>IP Address</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Uptime</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {assignedRouters.map((router) => (
-                      <TableRow key={router.id}>
-                        <TableCell className="font-medium">{router.name}</TableCell>
-                        <TableCell>{router.model}</TableCell>
-                        <TableCell className="font-mono text-sm">{router.ipAddress}</TableCell>
-                        <TableCell>{getStatusBadge(router.status)}</TableCell>
-                        <TableCell>{formatUptime(router.uptime)}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{router.town?.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {router.town?.district?.name} District
+                <div className="space-y-4">
+                  {assignedRouters.map((router) => (
+                    <div key={router.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-base sm:text-lg truncate">{router.name}</h3>
+                              <p className="text-sm text-muted-foreground">{router.model}</p>
+                              <p className="text-xs text-muted-foreground font-mono sm:hidden">{router.ipAddress}</p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              {getStatusBadge(router.status)}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
+                          <div className="hidden sm:block text-sm font-mono text-muted-foreground mt-1">
+                            {router.ipAddress}
+                          </div>
+                          <div className="mt-2">
+                            <div className="text-sm">
+                              <span className="font-medium">Location:</span> {router.town?.name}, {router.town?.district?.name}
+                            </div>
+                            <div className="hidden md:block text-sm text-muted-foreground mt-1">
+                              <span className="font-medium">Uptime:</span> {formatUptime(router.uptime)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUnassignRouter(router.id)}
+                          className="text-orange-600 hover:text-orange-700 w-full sm:w-auto"
+                        >
+                          Unassign
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleUnassignRouter(router.id)}
-                              className="text-orange-600 hover:text-orange-700"
+                              onClick={() => setRelocatingRouter(router)}
+                              className="text-blue-600 hover:text-blue-700 w-full sm:w-auto"
                             >
-                              Unassign
+                              <ArrowRight className="w-4 h-4 mr-1" />
+                              Relocate
                             </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
+                          </DialogTrigger>
+                          <DialogContent className="w-[95vw] max-w-[500px] mx-4">
+                            <DialogHeader>
+                              <DialogTitle>Relocate Router</DialogTitle>
+                              <DialogDescription>
+                                Move {router.name} to a different town in your area
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label>Current Location</Label>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {router.town?.name}, {router.town?.district?.name}
+                                </p>
+                              </div>
+                              <div>
+                                <Label htmlFor="relocation-town">New Location</Label>
+                                <Select value={relocationTown} onValueChange={setRelocationTown}>
+                                  <SelectTrigger className="mt-2">
+                                    <SelectValue placeholder="Choose a new town" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {towns
+                                      .filter(town => town.id !== router.townId)
+                                      .map((town) => (
+                                      <SelectItem key={town.id} value={town.id}>
+                                        {town.name}, {town.district?.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                                 <Button
                                   variant="outline"
-                                  size="sm"
-                                  onClick={() => setRelocatingRouter(router)}
-                                  className="text-blue-600 hover:text-blue-700"
+                                  onClick={() => {
+                                    setRelocatingRouter(null);
+                                    setRelocationTown('');
+                                  }}
                                 >
-                                  <ArrowRight className="w-4 h-4 mr-1" />
-                                  Relocate
+                                  Cancel
                                 </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Relocate Router</DialogTitle>
-                                  <DialogDescription>
-                                    Move {router.name} to a different town in your area
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label>Current Location</Label>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      {router.town?.name}, {router.town?.district?.name}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="relocation-town">New Location</Label>
-                                    <Select value={relocationTown} onValueChange={setRelocationTown}>
-                                      <SelectTrigger className="mt-2">
-                                        <SelectValue placeholder="Choose a new town" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {towns
-                                          .filter(town => town.id !== router.townId)
-                                          .map((town) => (
-                                          <SelectItem key={town.id} value={town.id}>
-                                            {town.name}, {town.district?.name}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="flex justify-end space-x-2">
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setRelocatingRouter(null);
-                                        setRelocationTown('');
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      onClick={handleRelocateRouter}
-                                      disabled={!relocationTown}
-                                      className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                      Relocate Router
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                                <Button
+                                  onClick={handleRelocateRouter}
+                                  disabled={!relocationTown}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Relocate Router
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -472,60 +484,52 @@ export default function StaffRoutersPage() {
                   No routers found in your assigned area
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Model</TableHead>
-                      <TableHead>IP Address</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Assignment</TableHead>
-                      <TableHead>Location</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allRouters.map((router) => (
-                      <TableRow key={router.id}>
-                        <TableCell className="font-medium">{router.name}</TableCell>
-                        <TableCell>{router.model}</TableCell>
-                        <TableCell className="font-mono text-sm">{router.ipAddress}</TableCell>
-                        <TableCell>{getStatusBadge(router.status)}</TableCell>
-                        <TableCell>
-                          {router.town ? (
-                            <div className="space-y-1">
-                              <Badge className="bg-green-100 text-green-800 text-xs">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Assigned
-                              </Badge>
-                              <p className="text-xs text-muted-foreground">
-                                {router.town.name}
-                              </p>
+                <div className="space-y-4">
+                  {allRouters.map((router) => (
+                    <div key={router.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-base sm:text-lg truncate">{router.name}</h3>
+                              <p className="text-sm text-muted-foreground">{router.model}</p>
+                              <p className="text-xs text-muted-foreground font-mono sm:hidden">{router.ipAddress}</p>
                             </div>
-                          ) : (
-                            <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-                              <AlertCircle className="w-3 h-3 mr-1" />
-                              Unassigned
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {router.town ? (
-                            <span className="text-sm text-muted-foreground">
-                              {router.town.district?.name}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground italic">
-                              No location
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {/* No action buttons for viewing only */}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                            <div className="flex-shrink-0">
+                              {getStatusBadge(router.status)}
+                            </div>
+                          </div>
+                          <div className="hidden sm:block text-sm font-mono text-muted-foreground mt-1">
+                            {router.ipAddress}
+                          </div>
+
+                          <div className="mt-2 space-y-1">
+                            {router.town ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge className="bg-green-100 text-green-800 text-xs">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                    Assigned
+                                  </Badge>
+                                </div>
+                                <div className="text-sm">
+                                  <span className="font-medium">Location:</span> {router.town.name}, {router.town.district?.name}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  Unassigned
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -545,18 +549,32 @@ export default function StaffRoutersPage() {
               ) : (
                 <div className="space-y-4">
                   {towns.map((town) => (
-                    <div key={town.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-medium">{town.name}</h3>
+                    <div key={town.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-base sm:text-lg truncate">{town.name}</h3>
                         <p className="text-sm text-muted-foreground">
                           {town.district?.name} District
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">
-                          {town._count?.routers || 0}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                        <div className="text-center sm:text-right">
+                          <div className="text-2xl sm:text-3xl font-bold text-primary">
+                            {town._count?.routers || 0}
+                          </div>
+                          <p className="text-sm text-muted-foreground">routers</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">routers</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            // Could add functionality to view routers in this town
+                            console.log('View routers in', town.name);
+                          }}
+                        >
+                          <MapPin className="w-4 h-4 mr-2" />
+                          View Details
+                        </Button>
                       </div>
                     </div>
                   ))}
