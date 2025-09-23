@@ -187,28 +187,6 @@ export default function LocationManagement() {
     }
   };
 
-  const createSampleData = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/admin/locations/sample-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        toast.success('Sample data created successfully');
-        await fetchData();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create sample data');
-      }
-    } catch (error) {
-      console.error('Error creating sample data:', error);
-      toast.error('Failed to create sample data');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openDialog = (type: string) => {
     setEditingItem(null);
@@ -240,28 +218,6 @@ export default function LocationManagement() {
             <p className="text-muted-foreground">Manage provinces, districts, and towns</p>
           </div>
 
-          {/* Sample data creation */}
-          {(provinces.length === 0 && districts.length === 0 && towns.length === 0) && (
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-blue-900">No location data found</h3>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Create sample data with Rwanda's provinces, districts, and towns to get started.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={createSampleData}
-                    className="bg-blue-600 hover:bg-blue-700"
-                    disabled={loading}
-                  >
-                    Create Sample Data
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Map search and embed */}
           <div className="grid gap-3">
