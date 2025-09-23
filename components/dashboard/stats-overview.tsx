@@ -25,7 +25,7 @@ export function StatsOverview() {
   }
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">Loading....</div>;
   }
 
   if (!stats) {
