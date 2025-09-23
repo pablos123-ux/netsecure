@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Router } from '@/types';
 import { Edit, Trash2, Activity } from 'lucide-react';
 import { toast } from 'sonner';
@@ -73,8 +72,15 @@ export function StaffRouterTable() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <CardHeader>
+          <CardTitle>My Routers</CardTitle>
+          <CardDescription>Routers in your assigned area</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-32">
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading routers...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -92,50 +98,58 @@ export function StaffRouterTable() {
             No routers found in your assigned area
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>IP Address</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Uptime</TableHead>
-                <TableHead>Bandwidth</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {routers.map((router) => (
-                <TableRow key={router.id}>
-                  <TableCell className="font-medium">{router.name}</TableCell>
-                  <TableCell>{router.model}</TableCell>
-                  <TableCell className="font-mono text-sm">{router.ipAddress}</TableCell>
-                  <TableCell>{getStatusBadge(router.status)}</TableCell>
-                  <TableCell>{formatUptime(router.uptime)}</TableCell>
-                  <TableCell>
-                    {router.bandwidth.toFixed(1)} / {router.capacity} Mbps
-                  </TableCell>
-                  <TableCell>
-                    {router.town?.name}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
+          <div className="space-y-4">
+            {routers.map((router) => (
+              <div key={router.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-base sm:text-lg truncate">{router.name}</h3>
+                    <p className="text-sm text-muted-foreground">{router.model}</p>
+                    <p className="text-xs font-mono text-muted-foreground mt-1">{router.ipAddress}</p>
+                  </div>
+                  <div className="flex flex-col sm:items-end gap-2">
+                    {getStatusBadge(router.status)}
+                    <div className="text-xs text-muted-foreground">
+                      {router.town?.name}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Uptime</p>
+                    <p className="text-sm font-medium">{formatUptime(router.uptime)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bandwidth</p>
+                    <p className="text-sm font-medium">
+                      {router.bandwidth.toFixed(1)} / {router.capacity} Mbps
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <div className="mt-1">
+                      {getStatusBadge(router.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Actions</p>
+                    <div className="flex items-center gap-1 mt-1">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(router)}>
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-3 h-3" />
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => handleViewActivity(router)}>
-                        <Activity className="w-4 h-4" />
+                        <Activity className="w-3 h-3" />
                       </Button>
                       <Button variant="outline" size="sm" className="text-red-600" onClick={() => handleDelete(router)}>
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

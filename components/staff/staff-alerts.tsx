@@ -64,8 +64,20 @@ export function StaffAlerts() {
   if (loading) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
+            Active Alerts
+          </CardTitle>
+          <CardDescription>
+            Alerts requiring your immediate attention
+          </CardDescription>
+        </CardHeader>
         <CardContent className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading alerts...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -91,36 +103,42 @@ export function StaffAlerts() {
         ) : (
           <div className="space-y-4">
             {alerts.map((alert) => (
-              <div key={alert.id} className="flex items-start space-x-4 p-4 border rounded-lg bg-red-50 border-red-200">
-                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Badge variant="destructive">Alert</Badge>
-                    <span className="text-sm text-gray-600">
-                      {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
-                    </span>
+              <div key={alert.id} className="border rounded-lg p-4 space-y-3 bg-red-50 border-red-200">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                        <Badge variant="destructive">Alert</Badge>
+                        <span className="text-sm text-gray-600">
+                          {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 mb-1 truncate">
+                        {alert.router?.name} - {alert.router?.ipAddress}
+                      </p>
+                      <p className="text-sm text-gray-700">{alert.message}</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 mb-1">
-                    {alert.router?.name} - {alert.router?.ipAddress}
-                  </p>
-                  <p className="text-sm text-gray-700">{alert.message}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleResolveAlert(alert.id)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Resolve
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDismissAlert(alert.id)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleResolveAlert(alert.id)}
+                      className="flex-1 sm:flex-initial"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline">Resolve</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDismissAlert(alert.id)}
+                      className="flex-1 sm:flex-initial"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

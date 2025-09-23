@@ -43,22 +43,32 @@ export default function StaffDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Staff Dashboard</h1>
+            <p className="text-gray-600 text-sm sm:text-base">Loading dashboard data...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-32 sm:h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Staff Dashboard</h1>
-        <p className="text-gray-600">Manage routers in your assigned area</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Staff Dashboard</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage routers in your assigned area</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Routers</CardTitle>
@@ -108,10 +118,12 @@ export default function StaffDashboard() {
       <StaffAlerts />
 
       {/* Router Management */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">Router Management</h2>
-          <p className="text-gray-600">Manage routers in your assigned area</p>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Router Management</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Manage routers in your assigned area</p>
+          </div>
         </div>
         
         <StaffRouterTable />

@@ -35,7 +35,12 @@ export default function StaffLayout({
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (response.ok) {
         const userData = await response.json();
         if (userData.role !== 'STAFF') {
@@ -43,13 +48,25 @@ export default function StaffLayout({
           return;
         }
         setUser(userData);
-      } else {
+      } else if (response.status === 401) {
+        // Unauthorized - redirect to login
         router.push('/login');
+      } else {
+        // Other error - show error but don't redirect immediately
+        console.error('Error fetching user data:', response.status);
+        toast.error('Failed to load user data');
+        // Wait a bit before redirecting to prevent flashing
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
       toast.error('Failed to load user data');
-      router.push('/login');
+      // Wait a bit before redirecting to prevent flashing
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } finally {
       setLoading(false);
     }
@@ -60,7 +77,10 @@ export default function StaffLayout({
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading staff dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -69,9 +89,9 @@ export default function StaffLayout({
     <SidebarProvider>
       <div className={`flex min-h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
         <Sidebar user={user} />
-        <StaffShell user={user}>
-          {children}
-        </StaffShell>
+      <StaffShell user={user}>
+        {children}
+      </StaffShell>
       </div>
     </SidebarProvider>
   );
@@ -87,7 +107,7 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
         isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
       )}
     >
-      <Topbar user={user} />
+      <Topbar user={user} key={user.id} />
       <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-background text-foreground min-h-screen">
         {children}
       </main>
@@ -98,41 +118,22 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
 function Topbar({ user: initialUser }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string } }) {
   const { toggleMobileSidebar } = useSidebar();
   const router = useRouter();
-  const [user, setUser] = useState(initialUser);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Fetch latest user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/auth/me', { cache: 'no-store' });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Error fetching user data in Topbar:', error);
-      }
-    };
-
-    fetchUser();
-
-    // Refresh user data periodically (every 30 seconds)
-    const intervalId = setInterval(fetchUser, 30000);
-
-    return () => clearInterval(intervalId);
-  }, []);
 
   // Load recent activities as notifications (staff)
   useEffect(() => {
     let isMounted = true;
-    let intervalId: any;
+    let intervalId: NodeJS.Timeout;
 
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/activity?limit=10');
+        const res = await fetch('/api/activity?limit=10', {
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
         if (!isMounted) return;
         if (res.ok) {
           const data = await res.json();
@@ -140,21 +141,25 @@ function Topbar({ user: initialUser }: { user: { id: string; name: string; email
         } else {
           setActivities([]);
         }
-      } catch {
+      } catch (error) {
+        console.error('Error loading notifications:', error);
         if (isMounted) setActivities([]);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
+    // Load immediately
     load();
+
+    // Set up polling every 20 seconds
     intervalId = setInterval(load, 20000);
 
     return () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, []);
+  }, []); // Empty dependency array to prevent re-creation on every render
 
   const handleLogout = async () => {
     try {
@@ -223,10 +228,10 @@ function Topbar({ user: initialUser }: { user: { id: string; name: string; email
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-9 px-2">
                 <Avatar className="h-7 w-7">
-                  <AvatarImage src={user.image || ''} />
-                  <AvatarFallback>{user.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
+                  <AvatarImage src={initialUser.image || ''} />
+                  <AvatarFallback>{initialUser.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
-                <span className="ml-2 inline max-w-[8rem] sm:max-w-none truncate text-sm">{user.name}</span>
+                <span className="ml-2 inline max-w-[8rem] sm:max-w-none truncate text-sm">{initialUser.name}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
