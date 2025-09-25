@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, Menu, Search, Bell } from 'lucide-react';
+import { User as UserIcon, LogOut, Menu, Search, Bell, Check } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
 
 interface User {
   id: string;
@@ -37,7 +38,7 @@ export default function StaffLayout({
 
   const fetchUser = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await authClient.fetchWithAuth('/api/auth/me', {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache'
@@ -120,52 +121,75 @@ function StaffShell({ children, user }: { children: React.ReactNode; user: { id:
 function Topbar({ user: initialUser }: { user: { id: string; name: string; email: string; role: 'ADMIN' | 'STAFF'; image?: string; lastLogin?: Date | null } }) {
   const { toggleMobileSidebar } = useSidebar();
   const router = useRouter();
-  const [activities, setActivities] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<string>('');
 
-  // Load recent activities as notifications (staff)
+  // Load notifications with real-time updates
   useEffect(() => {
     let isMounted = true;
     let intervalId: NodeJS.Timeout;
 
-    const load = async () => {
+    const loadNotifications = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/activity?limit=10', {
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
+        const url = lastCheckTime 
+          ? `/api/notifications?since=${lastCheckTime}&limit=10`
+          : `/api/notifications?limit=10`;
+        
+        const res = await authClient.fetchWithAuth(url);
         if (!isMounted) return;
+        
         if (res.ok) {
           const data = await res.json();
-          setActivities(data.activities || []);
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unreadCount || 0);
+          setLastCheckTime(data.lastUpdated);
         } else {
-          setActivities([]);
+          setNotifications([]);
+          setUnreadCount(0);
         }
       } catch (error) {
         console.error('Error loading notifications:', error);
-        if (isMounted) setActivities([]);
+        if (isMounted) {
+          setNotifications([]);
+          setUnreadCount(0);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
     // Load immediately
-    load();
-
-    // Set up polling every 20 seconds
-    intervalId = setInterval(load, 20000);
+    loadNotifications();
+    
+    // Set up polling every 10 seconds for real-time updates
+    intervalId = setInterval(loadNotifications, 10000);
 
     return () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, []); // Empty dependency array to prevent re-creation on every render
+  }, [lastCheckTime]);
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      await authClient.fetchWithAuth('/api/notifications', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'markAllAsRead' })
+      });
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await authClient.fetchWithAuth('/api/auth/logout', { method: 'POST' });
+      authClient.clearSession();
       router.push('/login');
       toast.success('Logged out successfully');
     } catch (error) {
@@ -201,25 +225,50 @@ function Topbar({ user: initialUser }: { user: { id: string; name: string; email
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-9 px-2 relative" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
-                {activities.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
-                    {activities.length}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 min-w-[1rem] px-1 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center animate-pulse">
+                    {unreadCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 sm:w-80 max-h-60 sm:max-h-80">
+              <div className="p-2 border-b">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Notifications</span>
+                  {unreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={markAllAsRead}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      Mark all read
+                    </Button>
+                  )}
+                </div>
+              </div>
               {loading ? (
                 <div className="p-3 text-sm text-muted-foreground">Loading...</div>
-              ) : activities.length === 0 ? (
+              ) : notifications.length === 0 ? (
                 <div className="p-3 text-sm text-muted-foreground">No notifications</div>
               ) : (
                 <div className="max-h-60 sm:max-h-80 overflow-auto">
-                  {activities.map((n: any) => (
-                    <div key={n.id} className="px-3 py-2 text-sm border-b last:border-b-0">
-                      <div className="font-medium">{n.action?.toString().replaceAll('_',' ') || 'Activity'}</div>
-                      <div className="text-muted-foreground line-clamp-2">{n.details || 'No details'}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{new Date(n.timestamp).toLocaleString()}</div>
+                  {notifications.map((n: any) => (
+                    <div key={n.id} className={`px-3 py-2 text-sm border-b last:border-b-0 ${!n.read ? 'bg-blue-50 dark:bg-blue-950' : ''}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium">{n.title}</div>
+                          <div className="text-muted-foreground line-clamp-2">{n.message}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {new Date(n.timestamp).toLocaleString()}
+                          </div>
+                        </div>
+                        {!n.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1 flex-shrink-0"></div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

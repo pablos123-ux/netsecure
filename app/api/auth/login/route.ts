@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,8 +46,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
-    const token = generateToken(user.id, user.role);
+    // Generate unique session ID for this login
+    const sessionId = crypto.randomUUID();
+    
+    // Generate JWT token with session ID
+    const token = generateToken(user.id, user.role, sessionId);
 
     // Update last login time
     await prisma.user.update({
@@ -59,11 +63,13 @@ export async function POST(request: NextRequest) {
     
     const response = NextResponse.json({
       user: userWithoutPassword,
+      sessionId: sessionId,
       message: 'Login successful'
     });
 
-    // Set HTTP-only cookie
-    response.cookies.set('auth-token', token, {
+    // Set HTTP-only cookie with unique name based on session ID
+    // This allows multiple concurrent sessions
+    response.cookies.set(`auth-token-${sessionId}`, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

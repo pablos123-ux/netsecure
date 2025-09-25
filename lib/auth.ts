@@ -25,17 +25,17 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(userId: string, role: string): string {
+export function generateToken(userId: string, role: string, sessionId?: string): string {
   return jwt.sign(
-    { userId, role },
+    { userId, role, sessionId },
     JWT_SECRET_KEY,
     { expiresIn: '24h' }
   );
 }
 
-export function verifyToken(token: string): { userId: string; role: string } | null {
+export function verifyToken(token: string): { userId: string; role: string; sessionId?: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET_KEY) as { userId: string; role: string };
+    return jwt.verify(token, JWT_SECRET_KEY) as { userId: string; role: string; sessionId?: string };
   } catch {
     return null;
   }
@@ -45,8 +45,40 @@ type AuthOptions = { includeRelations?: boolean };
 
 export async function getCurrentUser(request: NextRequest, options?: AuthOptions) {
   try {
-    // Use cookies directly to avoid request body disturbance issues
-    const token = request.cookies.get('auth-token')?.value;
+    // Get current session ID from request headers (sent by client)
+    const currentSessionId = request.headers.get('x-session-id');
+    
+    // Fallback: if no session ID in headers, try to find any valid session cookie
+    if (!currentSessionId) {
+      // Look for any auth-token-* cookies
+      const allCookies = request.cookies.getAll();
+      const authCookies = allCookies.filter(cookie => cookie.name.startsWith('auth-token-'));
+      
+      for (const cookie of authCookies) {
+        const token = cookie.value;
+        const decoded = verifyToken(token);
+        
+        if (decoded && decoded.sessionId) {
+          const includeRelations = options?.includeRelations === true;
+          const user = includeRelations
+            ? await prisma.user.findUnique({
+                where: { id: decoded.userId },
+                include: { assignedProvince: true, assignedDistrict: true },
+              })
+            : await prisma.user.findUnique({
+                where: { id: decoded.userId },
+                select: { id: true, name: true, email: true, role: true, image: true, lastLogin: true },
+              });
+          
+          return user;
+        }
+      }
+      
+      return null;
+    }
+
+    // Get the session-specific auth token
+    const token = request.cookies.get(`auth-token-${currentSessionId}`)?.value;
 
     if (!token) {
       return null;
@@ -54,6 +86,11 @@ export async function getCurrentUser(request: NextRequest, options?: AuthOptions
 
     const decoded = verifyToken(token);
     if (!decoded) {
+      return null;
+    }
+
+    // Verify that the session ID in the token matches the current session
+    if (decoded.sessionId !== currentSessionId) {
       return null;
     }
 

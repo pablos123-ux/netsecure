@@ -73,57 +73,52 @@ export const GET = withApiPerformanceLogging(async (request: NextRequest) => {
       );
     }
 
-    // Optimized parallel queries - using single query with conditional counting
+    // Optimized parallel queries - using simple count queries like staff stats
     const [
-      routerStats,
+      totalRouters,
+      onlineRouters,
+      offlineRouters,
       userStats,
       alertStats,
       locationStats,
       uptimeStats,
       bandwidthStats
     ] = await Promise.all([
-      // Get router counts in a single query - optimized with select
-      prisma.router.groupBy({
-        by: ['status'],
-        _count: { status: true }
-      }),
+      // Get total routers count
+      prisma.router.count({ where: { isActive: true } }),
 
-      // Get staff count - optimized with select
+      // Get online routers count
+      prisma.router.count({ where: { status: 'ONLINE', isActive: true } }),
+
+      // Get offline routers count
+      prisma.router.count({ where: { status: 'OFFLINE', isActive: true } }),
+
+      // Get staff count
       prisma.user.count({ where: { role: 'STAFF' } }),
 
-      // Get active alerts count - optimized with select
+      // Get active alerts count
       prisma.alert.count({ where: { status: 'ACTIVE' } }),
 
-      // Get location counts in parallel - optimized with Promise.all
+      // Get location counts in parallel
       Promise.all([
         prisma.province.count({ where: { isActive: true } }),
         prisma.district.count({ where: { isActive: true } }),
         prisma.town.count({ where: { isActive: true } })
       ]),
 
-      // Get uptime aggregation - optimized with where clause
+      // Get uptime aggregation
       prisma.router.aggregate({
         _avg: { uptime: true },
         _count: { uptime: true },
         where: { isActive: true }
       }),
 
-      // Get bandwidth aggregation - optimized with where clause
+      // Get bandwidth aggregation
       prisma.router.aggregate({
         _sum: { bandwidth: true },
         where: { isActive: true }
       })
     ]);
-
-    // Process router stats
-    const routerCounts = routerStats.reduce((acc, stat) => {
-      acc[stat.status.toLowerCase()] = stat._count.status;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const totalRouters = routerCounts.online + routerCounts.offline + (routerCounts.maintenance || 0) + (routerCounts.error || 0);
-    const onlineRouters = routerCounts.online || 0;
-    const offlineRouters = routerCounts.offline || 0;
 
     // Calculate average uptime
     const averageUptime = uptimeStats._avg.uptime ? Math.round(uptimeStats._avg.uptime) : 0;

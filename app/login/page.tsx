@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, Wifi } from 'lucide-react';
 import { toast } from 'sonner';
+import { authClient } from '@/lib/auth-client';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -38,6 +39,11 @@ export default function LoginPage() {
       }
 
       toast.success('Login successful!');
+      
+      // Store session data using auth client
+      if (data.sessionId) {
+        authClient.setSession(data.sessionId, data.user.id, data.user.role);
+      }
       
       // Redirect based on role
       if (data.user.role === 'ADMIN') {
