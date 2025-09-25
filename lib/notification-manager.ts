@@ -92,7 +92,10 @@ class NotificationManager {
   clearOldNotifications(): void {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
-    for (const [id, notification] of this.notifications.entries()) {
+    // Convert to array to avoid Map iteration issues
+    const entries = Array.from(this.notifications.entries());
+    for (let i = 0; i < entries.length; i++) {
+      const [id, notification] = entries[i];
       if (notification.timestamp < oneDayAgo) {
         this.notifications.delete(id);
       }
