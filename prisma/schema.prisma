@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
@@ -24,16 +21,14 @@ model User {
   lastLogin          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
-  
-  // Relations
-  assignedProvince   Province? @relation(fields: [assignedProvinceId], references: [id])
-  assignedDistrict   District? @relation(fields: [assignedDistrictId], references: [id])
-  logs               Log[]
   alerts             Alert[]
+  logs               Log[]
   createdRouters     Router[]  @relation("RouterCreatedBy")
-  
-  @@map("users")
+  assignedDistrict   District? @relation(fields: [assignedDistrictId], references: [id])
+  assignedProvince   Province? @relation(fields: [assignedProvinceId], references: [id])
+
   @@index([role])
+  @@map("users")
 }
 
 model Province {
@@ -43,11 +38,9 @@ model Province {
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
-  // Relations
   districts District[]
   users     User[]
-  
+
   @@map("provinces")
 }
 
@@ -59,16 +52,14 @@ model District {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
-  // Relations
   province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
   towns      Town[]
   users      User[]
-  
+
   @@unique([name, provinceId])
   @@unique([code, provinceId])
-  @@map("districts")
   @@index([provinceId])
+  @@map("districts")
 }
 
 model Town {
@@ -79,70 +70,64 @@ model Town {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
-  // Relations
-  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
   routers    Router[]
-  
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+
   @@unique([name, districtId])
   @@unique([code, districtId])
-  @@map("towns")
   @@index([districtId])
+  @@map("towns")
 }
 
 model Router {
-  id          String       @id @default(cuid())
-  name        String
-  model       String
-  ipAddress   String       @unique
-  macAddress  String?
-  status      RouterStatus @default(OFFLINE)
-  uptime      Int          @default(0) // in seconds
-  bandwidth   Float        @default(0) // current usage in Mbps
-  capacity    Float        @default(100) // max capacity in Mbps
-  bandwidthLimit Float?    // per-user bandwidth limit in Mbps (null means no limit)
-  location    String?      // physical location description
-  townId      String
-  createdById String
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  lastSeen    DateTime?
-  
-  // Relations
-  town        Town         @relation(fields: [townId], references: [id], onDelete: Cascade)
-  createdBy   User         @relation("RouterCreatedBy", fields: [createdById], references: [id])
-  alerts      Alert[]
+  id             String          @id @default(cuid())
+  name           String
+  model          String
+  ipAddress      String          @unique
+  macAddress     String?
+  status         RouterStatus    @default(OFFLINE)
+  uptime         Int             @default(0)
+  bandwidth      Float           @default(0)
+  capacity       Float           @default(100)
+  bandwidthLimit Float?
+  location       String?
+  townId         String
+  createdById    String
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  lastSeen       DateTime?
+  alerts         Alert[]
   connectedUsers ConnectedUser[]
-  
-  @@map("routers")
+  createdBy      User            @relation("RouterCreatedBy", fields: [createdById], references: [id])
+  town           Town            @relation(fields: [townId], references: [id], onDelete: Cascade)
+
   @@index([status])
   @@index([townId])
   @@index([createdById])
+  @@map("routers")
 }
 
 model ConnectedUser {
-  id          String            @id @default(cuid())
-  deviceName  String?
-  ipAddress   String
-  macAddress  String
-  status      ConnectedUserStatus @default(ACTIVE)
-  bandwidth   Float             @default(0) // current usage in Mbps
-  totalUsage  Float             @default(0) // total usage in MB
-  routerId    String
-  isBlocked   Boolean           @default(false)
-  blockedAt   DateTime?
-  blockedBy   String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  lastSeen    DateTime          @default(now())
-  
-  // Relations
-  router      Router            @relation(fields: [routerId], references: [id], onDelete: Cascade)
-  
+  id         String              @id @default(cuid())
+  deviceName String?
+  ipAddress  String
+  macAddress String
+  status     ConnectedUserStatus @default(ACTIVE)
+  bandwidth  Float               @default(0)
+  totalUsage Float               @default(0)
+  routerId   String
+  isBlocked  Boolean             @default(false)
+  blockedAt  DateTime?
+  blockedBy  String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  lastSeen   DateTime            @default(now())
+  router     Router              @relation(fields: [routerId], references: [id], onDelete: Cascade)
+
   @@unique([macAddress, routerId])
-  @@map("connected_users")
   @@index([routerId])
+  @@map("connected_users")
 }
 
 model Log {
@@ -153,33 +138,29 @@ model Log {
   ipAddress String?
   userAgent String?
   timestamp DateTime @default(now())
-  
-  // Relations
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("logs")
+
   @@index([userId])
+  @@map("logs")
 }
 
 model Alert {
-  id        String      @id @default(cuid())
-  routerId  String
-  type      AlertType   @default(OFFLINE)
-  message   String
-  severity  AlertSeverity @default(MEDIUM)
-  status    AlertStatus @default(ACTIVE)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         String        @id @default(cuid())
+  routerId   String
+  type       AlertType     @default(OFFLINE)
+  message    String
+  severity   AlertSeverity @default(MEDIUM)
+  status     AlertStatus   @default(ACTIVE)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
   resolvedAt DateTime?
   resolvedBy String?
-  
-  // Relations
-  router    Router      @relation(fields: [routerId], references: [id], onDelete: Cascade)
-  resolver  User?       @relation(fields: [resolvedBy], references: [id])
-  
-  @@map("alerts")
+  resolver   User?         @relation(fields: [resolvedBy], references: [id])
+  router     Router        @relation(fields: [routerId], references: [id], onDelete: Cascade)
+
   @@index([status])
   @@index([routerId])
+  @@map("alerts")
 }
 
 model Settings {
@@ -191,7 +172,7 @@ model Settings {
   isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("settings")
 }
 
