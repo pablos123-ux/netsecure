@@ -146,7 +146,7 @@ export default function UserAccessManagement() {
             <div className="flex items-center space-x-4">
               <div>
                 <h1 className="text-2xl font-bold">User Access Management</h1>
-                <p className="text-muted-foreground">Monitor and control internet access for connected users</p>
+                <p className="text-muted-foreground">Monitor and control internet access for connected user</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
