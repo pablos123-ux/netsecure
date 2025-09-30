@@ -33,6 +33,12 @@ interface ExtendedAlert extends AlertType {
     name: string;
     email: string;
   };
+  creator?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
 }
 
 export default function AdminAlertsPage() {
@@ -245,6 +251,11 @@ export default function AdminAlertsPage() {
                                 {alert.router.town.district && `, ${alert.router.town.district.name}`}
                               </span>
                             )}
+                            {alert.creator && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                Created by: <span className="font-medium">{alert.creator.name}</span> ({alert.creator.role})
+                              </div>
+                            )}
                           </div>
                           <div className="flex space-x-2">
                             <Button
@@ -321,11 +332,18 @@ export default function AdminAlertsPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{alert.message}</div>
-                            {alert.resolver && (
-                              <div className="text-sm text-muted-foreground">
-                                Resolved by: {alert.resolver.name}
-                              </div>
-                            )}
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              {alert.creator && (
+                                <div>
+                                  Created by: <span className="font-medium">{alert.creator.name}</span> ({alert.creator.role})
+                                </div>
+                              )}
+                              {alert.resolver && (
+                                <div>
+                                  Resolved by: <span className="font-medium">{alert.resolver.name}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>{getSeverityBadge(alert)}</TableCell>
@@ -421,6 +439,9 @@ export default function AdminAlertsPage() {
                             <div><strong>Location:</strong> {alert.router.town.name}
                               {alert.router.town.district && `, ${alert.router.town.district.name}`}
                             </div>
+                          )}
+                          {alert.creator && (
+                            <div><strong>Created by:</strong> {alert.creator.name} ({alert.creator.role})</div>
                           )}
                           {alert.resolver && (
                             <div><strong>Resolved by:</strong> {alert.resolver.name}</div>

@@ -31,6 +31,7 @@ model User {
   logs               Log[]
   alerts             Alert[]
   createdRouters     Router[]  @relation("RouterCreatedBy")
+  createdAlerts      Alert[]   @relation("AlertCreatedBy")
   
   @@map("users")
   @@index([role])
@@ -172,10 +173,12 @@ model Alert {
   updatedAt DateTime    @updatedAt
   resolvedAt DateTime?
   resolvedBy String?
+  createdBy String?
   
   // Relations
   router    Router      @relation(fields: [routerId], references: [id], onDelete: Cascade)
   resolver  User?       @relation(fields: [resolvedBy], references: [id])
+  creator   User?       @relation("AlertCreatedBy", fields: [createdBy], references: [id])
   
   @@map("alerts")
   @@index([status])

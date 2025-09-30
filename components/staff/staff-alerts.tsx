@@ -117,7 +117,19 @@ export function StaffAlerts() {
                       <p className="text-sm font-medium text-gray-900 mb-1 truncate">
                         {alert.router?.name} - {alert.router?.ipAddress}
                       </p>
-                      <p className="text-sm text-gray-700">{alert.message}</p>
+                      <p className="text-sm text-gray-700 mb-2">{alert.message}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        {alert.creator && (
+                          <span>
+                            Created by: <span className="font-medium text-gray-700">{alert.creator.name}</span> ({alert.creator.role})
+                          </span>
+                        )}
+                        {alert.resolver && (
+                          <span>
+                            Resolved by: <span className="font-medium text-gray-700">{alert.resolver.name}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 sm:flex-col sm:items-end">

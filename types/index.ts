@@ -96,8 +96,12 @@ export interface Alert {
   createdAt: Date;
   updatedAt: Date;
   userId?: string;
+  createdBy?: string;
+  resolvedBy?: string;
   router?: Router;
   user?: User;
+  creator?: User;
+  resolver?: User;
 }
 
 export interface DashboardStats {

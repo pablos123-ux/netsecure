@@ -41,6 +41,14 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -134,6 +142,14 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
           },
         },
       }
