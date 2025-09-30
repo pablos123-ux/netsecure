@@ -7,14 +7,11 @@ import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
-import { Inter } from 'next/font/google';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, LogOut, Menu, Search, Bell } from 'lucide-react';
-
-const inter = Inter({ subsets: ['latin'] });
 
 // Import the sidebar context from the sidebar component
 import { SidebarProvider, useSidebar } from '@/components/layout/sidebar';

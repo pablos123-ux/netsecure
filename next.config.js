@@ -8,6 +8,8 @@ const nextConfig = {
     // Optimize image loading
     formats: ['image/webp', 'image/avif'],
   },
+  // Font optimization
+  optimizeFonts: true,
   experimental: {
     serverComponentsExternalPackages: ['bcryptjs'],
     // Performance optimizations

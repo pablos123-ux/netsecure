@@ -28,17 +28,6 @@ interface ExtendedAlert extends AlertType {
       };
     };
   };
-  resolver?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  creator?: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
 }
 
 export default function AdminAlertsPage() {
